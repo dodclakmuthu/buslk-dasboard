@@ -152,10 +152,10 @@ const StaffManagement: React.FC = () => {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
           <input type="text" placeholder="Search staff by name or phone..."
             value={searchTerm} onChange={e => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" />
+            className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none" />
         </div>
         <select value={roleFilter} onChange={e => setRoleFilter(e.target.value)}
-          className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none">
+          className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-none">
           <option value="all">All Roles</option>
           <option value="manager">Managers</option>
           <option value="driver">Drivers</option>
@@ -229,12 +229,12 @@ const StaffManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Full Name *</label>
                 <input required value={staffForm.name} onChange={e => setStaffForm(p => ({ ...p, name: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Phone Number *</label>
                 <input required value={staffForm.phone} onChange={e => setStaffForm(p => ({ ...p, phone: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   placeholder="07XXXXXXXX" />
               </div>
               <div>
@@ -253,18 +253,18 @@ const StaffManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">NIC Number</label>
                 <input value={staffForm.nic} onChange={e => setStaffForm(p => ({ ...p, nic: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
               </div>
               {(staffForm.role === 'driver') && (
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">License Number</label>
                   <input value={staffForm.licenseNo} onChange={e => setStaffForm(p => ({ ...p, licenseNo: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                 </div>
               )}
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowAddStaff(false)}
-                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
                 <button type="submit"
                   className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition-all">
                   Add Staff
@@ -287,7 +287,7 @@ const StaffManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Select Bus *</label>
                 <select required value={assignForm.busId} onChange={e => setAssignForm(p => ({ ...p, busId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                   <option value="">Select Bus</option>
                   {activeBuses.map(b => <option key={b.id} value={b.id}>{b.regNumber} - Route {SRI_LANKAN_ROUTES.find(r => r.id === b.routeId)?.routeNo}</option>)}
                 </select>
@@ -295,7 +295,7 @@ const StaffManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Driver *</label>
                 <select required value={assignForm.driverId} onChange={e => setAssignForm(p => ({ ...p, driverId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                   <option value="">Select Driver</option>
                   {getDrivers().map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
@@ -303,14 +303,14 @@ const StaffManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Conductor *</label>
                 <select required value={assignForm.conductorId} onChange={e => setAssignForm(p => ({ ...p, conductorId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                   <option value="">Select Conductor</option>
                   {getConductors().map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowAssign(false)}
-                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
                 <button type="submit"
                   className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-medium hover:shadow-lg transition-all">
                   Assign Crew

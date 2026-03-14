@@ -1,19 +1,35 @@
-import React, { useState } from 'react';
-import { useAppContext } from '@/contexts/AppContext';
-import { Settings, User, Building2, Bell, Shield, Globe, Save, CheckCircle2 } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Settings, Building2, Bell, Shield, Globe, Save, CheckCircle2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
+import { updateMyCompany } from '@/lib/companyApi';
+import { ApiError } from '@/lib/api';
 
 const SettingsView: React.FC = () => {
-  const { currentUser } = useAppContext();
+  const { user, token } = useAuth();
+  const { company, setCompany } = useCompany();
   const [activeTab, setActiveTab] = useState('company');
   const [saved, setSaved] = useState(false);
+  const [isSavingCompany, setIsSavingCompany] = useState(false);
 
   const [companyForm, setCompanyForm] = useState({
-    name: 'Perera Bus Services',
-    address: '45/2, Kandy Road, Kadawatha',
-    phone: '0771234567',
-    registrationNo: 'PV/2024/001',
+    name: '',
+    address: '',
+    phone: '',
+    registrationNo: '',
   });
+
+  useEffect(() => {
+    if (company) {
+      setCompanyForm({
+        name: company.name,
+        address: company.address ?? '',
+        phone: company.mobileNumber ?? '',
+        registrationNo: '',
+      });
+    }
+  }, [company]);
 
   const [wageDefaults, setWageDefaults] = useState({
     defaultWageModel: 'percentage',
@@ -28,6 +44,27 @@ const SettingsView: React.FC = () => {
     setSaved(true);
     toast({ title: 'Settings Saved', description: 'Your settings have been updated successfully.' });
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleSaveCompany = async () => {
+    if (!token) return;
+    setIsSavingCompany(true);
+    try {
+      const res = await updateMyCompany(token, {
+        name: companyForm.name,
+        mobileNumber: companyForm.phone || undefined,
+        address: companyForm.address || undefined,
+      });
+      setCompany(res.company);
+      setSaved(true);
+      toast({ title: 'Company Updated', description: 'Company profile saved successfully.' });
+      setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to save company profile';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
+    } finally {
+      setIsSavingCompany(false);
+    }
   };
 
   const tabs = [
@@ -75,28 +112,28 @@ const SettingsView: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Company Name</label>
                   <input value={companyForm.name} onChange={e => setCompanyForm(p => ({ ...p, name: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Phone</label>
                   <input value={companyForm.phone} onChange={e => setCompanyForm(p => ({ ...p, phone: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Address</label>
                   <input value={companyForm.address} onChange={e => setCompanyForm(p => ({ ...p, address: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Registration Number</label>
                   <input value={companyForm.registrationNo} onChange={e => setCompanyForm(p => ({ ...p, registrationNo: e.target.value }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                 </div>
               </div>
-              <button onClick={handleSave}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all">
+              <button onClick={handleSaveCompany} disabled={isSavingCompany}
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all disabled:opacity-60">
                 {saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                {saved ? 'Saved!' : 'Save Changes'}
+                {isSavingCompany ? 'Saving…' : saved ? 'Saved!' : 'Save Changes'}
               </button>
             </div>
           )}
@@ -110,31 +147,31 @@ const SettingsView: React.FC = () => {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Default Driver %</label>
                   <input type="number" value={wageDefaults.defaultDriverPercentage}
                     onChange={e => setWageDefaults(p => ({ ...p, defaultDriverPercentage: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Default Conductor %</label>
                   <input type="number" value={wageDefaults.defaultConductorPercentage}
                     onChange={e => setWageDefaults(p => ({ ...p, defaultConductorPercentage: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Default Fixed Driver Wage (Rs.)</label>
                   <input type="number" value={wageDefaults.defaultFixedDriverWage}
                     onChange={e => setWageDefaults(p => ({ ...p, defaultFixedDriverWage: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Default Fixed Conductor Wage (Rs.)</label>
                   <input type="number" value={wageDefaults.defaultFixedConductorWage}
                     onChange={e => setWageDefaults(p => ({ ...p, defaultFixedConductorWage: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-medium text-slate-700 mb-1">Max Combined Percentage Warning (%)</label>
                   <input type="number" value={wageDefaults.maxPercentageWarning}
                     onChange={e => setWageDefaults(p => ({ ...p, maxPercentageWarning: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
                   <p className="text-xs text-slate-400 mt-1">System will warn if driver% + conductor% exceeds this value</p>
                 </div>
               </div>
@@ -176,8 +213,8 @@ const SettingsView: React.FC = () => {
               <h2 className="text-lg font-semibold text-slate-900">Security Settings</h2>
               <div className="p-4 bg-slate-50 rounded-xl">
                 <p className="text-sm font-medium text-slate-900">Current User</p>
-                <p className="text-sm text-slate-600 mt-1">{currentUser.name} ({currentUser.role})</p>
-                <p className="text-sm text-slate-600">Phone: {currentUser.phone}</p>
+                <p className="text-sm text-slate-600 mt-1">{user?.fullName ?? '—'} (Owner)</p>
+                <p className="text-sm text-slate-600">Phone: {user?.mobileNumber ?? '—'}</p>
               </div>
               <div className="p-4 bg-slate-50 rounded-xl">
                 <p className="text-sm font-medium text-slate-900">Settlement Lock Policy</p>

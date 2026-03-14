@@ -1,9 +1,23 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 import {
   LayoutDashboard, Bus, MapPin, Users, Route, Receipt,
   Calculator, BarChart3, Bell, Settings, FileText, X, ChevronRight
 } from 'lucide-react';
+
+const VIEW_PATH: Record<string, string> = {
+  dashboard: '/dashboard',
+  buses: '/buses',
+  trips: '/trips',
+  staff: '/staff',
+  settlement: '/settlement',
+  reports: '/reports',
+  routes: '/routes',
+  notifications: '/notifications',
+  blueprint: '/blueprint',
+  settings: '/settings',
+};
 
 const navItems = [
   { id: 'dashboard' as const, label: 'Dashboard', icon: LayoutDashboard },
@@ -19,7 +33,9 @@ const navItems = [
 ];
 
 const Sidebar: React.FC = () => {
-  const { sidebarOpen, toggleSidebar, currentView, setCurrentView, unreadNotificationCount } = useAppContext();
+  const { sidebarOpen, toggleSidebar, unreadNotificationCount } = useAppContext();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   return (
     <>
@@ -58,12 +74,13 @@ const Sidebar: React.FC = () => {
           <ul className="space-y-1 px-3">
             {navItems.map(item => {
               const Icon = item.icon;
-              const isActive = currentView === item.id;
+              const itemPath = VIEW_PATH[item.id];
+              const isActive = location.pathname === itemPath;
               return (
                 <li key={item.id}>
                   <button
                     onClick={() => {
-                      setCurrentView(item.id);
+                      navigate(itemPath);
                       if (sidebarOpen) toggleSidebar();
                     }}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative

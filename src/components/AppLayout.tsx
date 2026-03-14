@@ -1,43 +1,30 @@
 import React from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
-
-
 import Sidebar from './Sidebar';
-import Dashboard from './Dashboard';
-import BusManagement from './BusManagement';
-import TripManagement from './TripManagement';
-import StaffManagement from './StaffManagement';
-import DailySettlement from './DailySettlement';
-import Reports from './Reports';
-import RouteMaster from './RouteMaster';
-import NotificationsView from './NotificationsView';
-import Blueprint from './Blueprint';
-import SettingsView from './SettingsView';
 import { Menu, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
+const PATH_LABEL: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/buses': 'Bus Fleet',
+  '/trips': 'Trip Management',
+  '/staff': 'Staff & Crew',
+  '/settlement': 'Daily Settlement',
+  '/reports': 'Reports',
+  '/routes': 'Route Master',
+  '/notifications': 'Notifications',
+  '/blueprint': 'Product Blueprint',
+  '/settings': 'Settings',
+};
 
-const AppLayout: React.FC = () => {
-  const { sidebarOpen, toggleSidebar, currentView, unreadNotificationCount, setCurrentView } = useAppContext();
+const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { sidebarOpen, toggleSidebar, unreadNotificationCount } = useAppContext();
   const { logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
 
-
-
-  const renderContent = () => {
-    switch (currentView) {
-      case 'dashboard': return <Dashboard />;
-      case 'buses': return <BusManagement />;
-      case 'trips': return <TripManagement />;
-      case 'staff': return <StaffManagement />;
-      case 'settlement': return <DailySettlement />;
-      case 'reports': return <Reports />;
-      case 'routes': return <RouteMaster />;
-      case 'notifications': return <NotificationsView />;
-      case 'blueprint': return <Blueprint />;
-      case 'settings': return <SettingsView />;
-      default: return <Dashboard />;
-    }
-  };
+  const pageLabel = PATH_LABEL[location.pathname] ?? 'Dashboard';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -56,14 +43,14 @@ const AppLayout: React.FC = () => {
                 <Menu className="w-5 h-5 text-slate-600" />
               </button>
               <div className="hidden sm:block">
-                <h2 className="text-sm font-semibold text-slate-900 capitalize">{currentView === 'blueprint' ? 'Product Blueprint' : currentView}</h2>
+                <h2 className="text-sm font-semibold text-slate-900">{pageLabel}</h2>
                 <p className="text-[11px] text-slate-400">BusLK — Sri Lankan Bus Operations Platform</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setCurrentView('notifications')}
+                onClick={() => navigate('/notifications')}
                 className="relative p-2 hover:bg-slate-100 rounded-xl transition-colors"
               >
                 <Bell className="w-5 h-5 text-slate-600" />
@@ -90,7 +77,7 @@ const AppLayout: React.FC = () => {
 
         {/* Page Content */}
         <main className="p-4 lg:p-8 max-w-7xl">
-          {renderContent()}
+          {children}
         </main>
 
         {/* Footer */}

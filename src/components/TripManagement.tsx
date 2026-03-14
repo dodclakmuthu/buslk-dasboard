@@ -317,7 +317,7 @@ const TripManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Driver</label>
                 <select value={tripForm.driverId} onChange={e => setTripForm(p => ({ ...p, driverId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                   <option value="">Select Driver</option>
                   {getDrivers().map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                 </select>
@@ -325,7 +325,7 @@ const TripManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Conductor</label>
                 <select value={tripForm.conductorId} onChange={e => setTripForm(p => ({ ...p, conductorId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                   <option value="">Select Conductor</option>
                   {getConductors().map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
@@ -333,7 +333,7 @@ const TripManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Start Point *</label>
                 <select required value={tripForm.startPointId} onChange={e => setTripForm(p => ({ ...p, startPointId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                   <option value="">Select Start Point</option>
                   {routePoints.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
@@ -341,7 +341,7 @@ const TripManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Destination (Optional)</label>
                 <select value={tripForm.endPointId} onChange={e => setTripForm(p => ({ ...p, endPointId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                   <option value="">Select Destination</option>
                   {routePoints.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
@@ -349,11 +349,11 @@ const TripManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Start Time</label>
                 <input type="time" value={tripForm.startTime} onChange={e => setTripForm(p => ({ ...p, startTime: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowStartTrip(false)}
-                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
                 <button type="submit"
                   className="flex-1 py-2.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl text-sm font-medium hover:shadow-lg transition-all">
                   Start Trip
@@ -376,18 +376,18 @@ const TripManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Trip Income (Rs.) *</label>
                 <input required type="number" min={0} value={endTripForm.income || ''} onChange={e => setEndTripForm(p => ({ ...p, income: parseFloat(e.target.value) || 0 }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   placeholder="Enter total cash collected" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Passenger Count</label>
                 <input type="number" min={0} value={endTripForm.passengerCount || ''} onChange={e => setEndTripForm(p => ({ ...p, passengerCount: parseInt(e.target.value) || 0 }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">End Point</label>
                 <select value={endTripForm.endPointId} onChange={e => setEndTripForm(p => ({ ...p, endPointId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                   <option value="">Select End Point</option>
                   {routePoints.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
@@ -395,17 +395,17 @@ const TripManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">End Time</label>
                 <input type="time" value={endTripForm.endTime} onChange={e => setEndTripForm(p => ({ ...p, endTime: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Notes</label>
                 <textarea value={endTripForm.notes} onChange={e => setEndTripForm(p => ({ ...p, notes: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" rows={2}
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" rows={2}
                   placeholder="Any notes about this trip..." />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowEndTrip(null)}
-                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
                 <button type="submit"
                   className="flex-1 py-2.5 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl text-sm font-medium hover:shadow-lg transition-all">
                   Complete Trip
@@ -441,13 +441,13 @@ const TripManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Amount (Rs.) *</label>
                 <input required type="number" min={1} value={expenseForm.amount || ''} onChange={e => setExpenseForm(p => ({ ...p, amount: parseFloat(e.target.value) || 0 }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   placeholder="Enter amount" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Link to Trip (Optional)</label>
                 <select value={expenseForm.tripId} onChange={e => setExpenseForm(p => ({ ...p, tripId: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500">
                   <option value="">General / Daily Expense</option>
                   {busTrips.map(t => <option key={t.id} value={t.id}>Trip #{t.tripNumber}</option>)}
                 </select>
@@ -455,12 +455,12 @@ const TripManagement: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Description</label>
                 <input value={expenseForm.description} onChange={e => setExpenseForm(p => ({ ...p, description: e.target.value }))}
-                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   placeholder="e.g., Full tank at Kadawatha" />
               </div>
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setShowAddExpense(false)}
-                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
+                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium text-slate-600 hover:bg-slate-50">Cancel</button>
                 <button type="submit"
                   className="flex-1 py-2.5 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-xl text-sm font-medium hover:shadow-lg transition-all">
                   Add Expense
