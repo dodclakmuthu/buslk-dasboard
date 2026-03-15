@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { ApiBus, BusStatus, CreateBusInput } from '@/lib/busApi';
+import { useAuth } from '@/contexts/AuthContext';
+import type { ApiStaff } from '@/lib/staffApi';
+import { listStaff } from '@/lib/staffApi';
 
 type FormState = {
   registrationNumber: string;
@@ -8,6 +11,8 @@ type FormState = {
   ntcPermitNumber: string;
   seatCount: string;
   status: BusStatus;
+  defaultDriverStaffId: string;
+  defaultConductorStaffId: string;
 };
 
 const defaultForm = (): FormState => ({
@@ -16,6 +21,8 @@ const defaultForm = (): FormState => ({
   ntcPermitNumber: '',
   seatCount: '',
   status: 'ACTIVE',
+  defaultDriverStaffId: '',
+  defaultConductorStaffId: '',
 });
 
 type Props = {
@@ -23,7 +30,12 @@ type Props = {
   saving: boolean;
   error: string | null;
   onClose: () => void;
-  onSubmit: (input: CreateBusInput) => void;
+  onSubmit: (
+    input: CreateBusInput & {
+      defaultDriverStaffId?: string | null;
+      defaultConductorStaffId?: string | null;
+    },
+  ) => void;
 };
 
 const inputCls =
@@ -31,6 +43,12 @@ const inputCls =
 const labelCls = 'block text-sm font-medium text-slate-700 mb-1';
 
 const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit }) => {
+  const { token } = useAuth();
+
+  const [staff, setStaff] = useState<ApiStaff[]>([]);
+  const [staffLoading, setStaffLoading] = useState(false);
+  const [staffError, setStaffError] = useState<string | null>(null);
+
   const [form, setForm] = useState<FormState>(() =>
     editing
       ? {
@@ -39,8 +57,36 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
           ntcPermitNumber: editing.ntcPermitNumber ?? '',
           seatCount: editing.seatCount != null ? String(editing.seatCount) : '',
           status: editing.status,
+          defaultDriverStaffId: editing.defaultDriverStaffId ?? '',
+          defaultConductorStaffId: editing.defaultConductorStaffId ?? '',
         }
       : defaultForm(),
+  );
+
+  useEffect(() => {
+    if (!editing || !token) return;
+    setStaffLoading(true);
+    setStaffError(null);
+    void (async () => {
+      try {
+        const res = await listStaff(token);
+        setStaff(res.staff);
+      } catch (err: any) {
+        setStaffError(err?.message ?? 'Failed to load staff');
+      } finally {
+        setStaffLoading(false);
+      }
+    })();
+  }, [editing, token]);
+
+  const activeStaff = useMemo(() => staff.filter(s => s.isActive), [staff]);
+  const driverOptions = useMemo(
+    () => activeStaff.filter(s => s.roleType === 'DRIVER' || s.roleType === 'DRIVER_CONDUCTOR'),
+    [activeStaff],
+  );
+  const conductorOptions = useMemo(
+    () => activeStaff.filter(s => s.roleType === 'CONDUCTOR' || s.roleType === 'DRIVER_CONDUCTOR'),
+    [activeStaff],
   );
 
   const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -48,13 +94,23 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const input: CreateBusInput = {
+    const input: CreateBusInput & {
+      defaultDriverStaffId?: string | null;
+      defaultConductorStaffId?: string | null;
+    } = {
       registrationNumber: form.registrationNumber.trim(),
       ...(form.busName.trim() && { busName: form.busName.trim() }),
       ...(form.ntcPermitNumber.trim() && { ntcPermitNumber: form.ntcPermitNumber.trim() }),
       ...(form.seatCount && { seatCount: parseInt(form.seatCount, 10) }),
       status: form.status,
     };
+
+    // Defaults are only supported on update (edit mode).
+    if (editing) {
+      input.defaultDriverStaffId = form.defaultDriverStaffId ? form.defaultDriverStaffId : null;
+      input.defaultConductorStaffId = form.defaultConductorStaffId ? form.defaultConductorStaffId : null;
+    }
+
     onSubmit(input);
   };
 
@@ -130,6 +186,7 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
               <option value="ACTIVE">Active</option>
               <option value="INACTIVE">Inactive</option>
               <option value="MAINTENANCE">Maintenance</option>
+              <option value="SOLD">Sold</option>
             </select>
           </div>
 
@@ -137,6 +194,67 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
           <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-500 flex items-center gap-2">
             <span className="text-slate-400">🗺</span>
             Route assignment will be available once routes are configured in the Routes module.
+          </div>
+
+          {/* Default crew (optional) */}
+          <div className="bg-white rounded-2xl border border-slate-100 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Default Crew (optional)</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Used as a fallback for daily assignments when you leave roles blank.
+                </p>
+              </div>
+            </div>
+
+            {!editing ? (
+              <div className="mt-3 text-sm text-slate-500 bg-slate-50 rounded-xl p-3">
+                Save the bus first to set default crew.
+              </div>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {staffError && (
+                  <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+                    {staffError}
+                  </p>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelCls}>Default Driver</label>
+                    <select
+                      value={form.defaultDriverStaffId}
+                      onChange={set('defaultDriverStaffId')}
+                      className={inputCls}
+                      disabled={staffLoading}
+                    >
+                      <option value="">None</option>
+                      {driverOptions.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.fullName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className={labelCls}>Default Conductor</label>
+                    <select
+                      value={form.defaultConductorStaffId}
+                      onChange={set('defaultConductorStaffId')}
+                      className={inputCls}
+                      disabled={staffLoading}
+                    >
+                      <option value="">None</option>
+                      {conductorOptions.map(s => (
+                        <option key={s.id} value={s.id}>
+                          {s.fullName}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* API error */}

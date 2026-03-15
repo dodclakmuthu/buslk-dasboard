@@ -1,14 +1,24 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Bus, Plus, Edit2, Search, CheckCircle2, Wrench, Shield, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { Bus, Plus, Edit2, Search, CheckCircle2, Wrench, Shield, MapPin, Loader2, AlertCircle, MoreVertical, KeyRound, RefreshCw, Settings, Tag } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { ApiBus, BusStatus, CreateBusInput, listBuses, createBus, updateBus } from '@/lib/busApi';
+import { ApiBus, BusStatus, CreateBusInput, UpdateBusInput, listBuses, createBus, updateBus, setBusPin, resetBusPin, updateBusStatus } from '@/lib/busApi';
 import BusForm from '@/components/BusForm';
 import { useToast } from '@/hooks/use-toast';
+import BusPinModal from '@/components/BusPinModal';
+import BusStatusModal from '@/components/BusStatusModal';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const STATUS_STYLES: Record<BusStatus, { bg: string; text: string; icon: React.ReactNode }> = {
   ACTIVE: { bg: 'bg-emerald-100', text: 'text-emerald-700', icon: <CheckCircle2 className="w-3 h-3" /> },
   INACTIVE: { bg: 'bg-slate-100', text: 'text-slate-500', icon: <span className="w-3 h-3 inline-block rounded-full border border-slate-400" /> },
   MAINTENANCE: { bg: 'bg-amber-100', text: 'text-amber-700', icon: <Wrench className="w-3 h-3" /> },
+  SOLD: { bg: 'bg-slate-200', text: 'text-slate-700', icon: <Tag className="w-3 h-3" /> },
 };
 
 const BusManagement: React.FC = () => {
@@ -27,6 +37,18 @@ const BusManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
+  const [pinModal, setPinModal] = useState<{ bus: ApiBus; mode: 'set' | 'reset' } | null>(null);
+  const [pinSaving, setPinSaving] = useState(false);
+  const [pinError, setPinError] = useState<string | null>(null);
+
+  const [statusModalBus, setStatusModalBus] = useState<ApiBus | null>(null);
+  const [statusSaving, setStatusSaving] = useState(false);
+  const [statusError, setStatusError] = useState<string | null>(null);
+
+  const [confirmSoldBus, setConfirmSoldBus] = useState<ApiBus | null>(null);
+  const [soldSaving, setSoldSaving] = useState(false);
+  const [soldError, setSoldError] = useState<string | null>(null);
+
   const load = useCallback(async () => {
     if (!token) return;
     setLoading(true);
@@ -43,17 +65,23 @@ const BusManagement: React.FC = () => {
 
   useEffect(() => { load(); }, [load]);
 
-  const handleFormSubmit = async (input: CreateBusInput) => {
+  const handleFormSubmit = async (
+    input: CreateBusInput & {
+      defaultDriverStaffId?: string | null;
+      defaultConductorStaffId?: string | null;
+    },
+  ) => {
     if (!token) return;
     setSaving(true);
     setFormError(null);
     try {
       if (editingBus) {
-        const { bus } = await updateBus(token, editingBus.id, input);
+        const { bus } = await updateBus(token, editingBus.id, input as UpdateBusInput);
         setBuses(prev => prev.map(b => (b.id === bus.id ? bus : b)));
         toast({ title: 'Bus updated', description: `${bus.registrationNumber} saved.` });
       } else {
-        const { bus } = await createBus(token, input);
+        const { defaultDriverStaffId: _dd, defaultConductorStaffId: _dc, ...createInput } = input;
+        const { bus } = await createBus(token, createInput);
         setBuses(prev => [...prev, bus]);
         toast({ title: 'Bus registered', description: `${bus.registrationNumber} added to fleet.` });
       }
@@ -69,10 +97,67 @@ const BusManagement: React.FC = () => {
   const handleQuickStatus = async (bus: ApiBus, status: BusStatus) => {
     if (!token) return;
     try {
-      const { bus: updated } = await updateBus(token, bus.id, { status });
+      const { bus: updated } = await updateBusStatus(token, bus.id, status);
       setBuses(prev => prev.map(b => (b.id === updated.id ? updated : b)));
     } catch (err: any) {
       toast({ title: 'Update failed', description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const openPinModal = (bus: ApiBus, mode: 'set' | 'reset') => {
+    setPinError(null);
+    setPinModal({ bus, mode });
+  };
+
+  const submitPin = async (pin: string) => {
+    if (!token || !pinModal) return;
+    setPinSaving(true);
+    setPinError(null);
+    try {
+      if (pinModal.mode === 'set') await setBusPin(token, pinModal.bus.id, pin);
+      else await resetBusPin(token, pinModal.bus.id, pin);
+
+      toast({
+        title: pinModal.mode === 'set' ? 'PIN set' : 'PIN reset',
+        description: `${pinModal.bus.registrationNumber} updated successfully.`,
+      });
+      setPinModal(null);
+    } catch (err: any) {
+      setPinError(err.message ?? 'Failed to update PIN');
+    } finally {
+      setPinSaving(false);
+    }
+  };
+
+  const submitStatus = async (bus: ApiBus, status: BusStatus) => {
+    if (!token) return;
+    setStatusSaving(true);
+    setStatusError(null);
+    try {
+      const { bus: updated } = await updateBusStatus(token, bus.id, status);
+      setBuses(prev => prev.map(b => (b.id === updated.id ? updated : b)));
+      toast({ title: 'Status updated', description: `${updated.registrationNumber} is now ${updated.status}.` });
+      setStatusModalBus(null);
+    } catch (err: any) {
+      setStatusError(err.message ?? 'Failed to update status');
+    } finally {
+      setStatusSaving(false);
+    }
+  };
+
+  const submitMarkSold = async () => {
+    if (!token || !confirmSoldBus) return;
+    setSoldSaving(true);
+    setSoldError(null);
+    try {
+      const { bus: updated } = await updateBusStatus(token, confirmSoldBus.id, 'SOLD');
+      setBuses(prev => prev.map(b => (b.id === updated.id ? updated : b)));
+      toast({ title: 'Bus marked as SOLD', description: `${updated.registrationNumber} is now SOLD.` });
+      setConfirmSoldBus(null);
+    } catch (err: any) {
+      setSoldError(err.message ?? 'Failed to mark as SOLD');
+    } finally {
+      setSoldSaving(false);
     }
   };
 
@@ -124,6 +209,7 @@ const BusManagement: React.FC = () => {
           <option value="ACTIVE">Active</option>
           <option value="INACTIVE">Inactive</option>
           <option value="MAINTENANCE">Maintenance</option>
+          <option value="SOLD">Sold</option>
         </select>
       </div>
 
@@ -160,9 +246,16 @@ const BusManagement: React.FC = () => {
           {filteredBuses.map(bus => {
             const st = STATUS_STYLES[bus.status];
             const routeLabel = bus.route?.routeName ?? 'No route assigned';
+            const isSold = bus.status === 'SOLD';
 
             return (
-              <div key={bus.id} className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+              <div
+                key={bus.id}
+                className={
+                  "bg-white rounded-2xl border border-slate-100 shadow-sm transition-shadow overflow-hidden" +
+                  (isSold ? ' opacity-80' : ' hover:shadow-md')
+                }
+              >
                 <div className="p-5">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex items-center gap-3">
@@ -177,12 +270,54 @@ const BusManagement: React.FC = () => {
                         </span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => { setEditingBus(bus); setFormError(null); setShowForm(true); }}
-                      className="p-2 hover:bg-slate-100 rounded-lg transition-colors shrink-0"
-                    >
-                      <Edit2 className="w-4 h-4 text-slate-400" />
-                    </button>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => { setEditingBus(bus); setFormError(null); setShowForm(true); }}
+                        className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                      >
+                        <Edit2 className="w-4 h-4 text-slate-400" />
+                      </button>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="p-2 hover:bg-slate-100 rounded-lg transition-colors" aria-label="Bus actions">
+                            <MoreVertical className="w-4 h-4 text-slate-400" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48">
+                          <DropdownMenuItem
+                            onSelect={(e) => { e.preventDefault(); openPinModal(bus, 'set'); }}
+                            disabled={isSold}
+                            className="gap-2"
+                          >
+                            <KeyRound className="w-4 h-4" /> Set PIN
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={(e) => { e.preventDefault(); openPinModal(bus, 'reset'); }}
+                            disabled={isSold}
+                            className="gap-2"
+                          >
+                            <RefreshCw className="w-4 h-4" /> Reset PIN
+                          </DropdownMenuItem>
+
+                          <DropdownMenuSeparator />
+
+                          <DropdownMenuItem
+                            onSelect={(e) => { e.preventDefault(); setStatusError(null); setStatusModalBus(bus); }}
+                            className="gap-2"
+                          >
+                            <Settings className="w-4 h-4" /> Change Status
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={(e) => { e.preventDefault(); setSoldError(null); setConfirmSoldBus(bus); }}
+                            disabled={isSold}
+                            className="gap-2 text-red-600 focus:text-red-600"
+                          >
+                            <Tag className="w-4 h-4" /> Mark as Sold
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
 
                   <div className="space-y-2 text-sm">
@@ -204,13 +339,14 @@ const BusManagement: React.FC = () => {
                 <div className="bg-slate-50 px-5 py-3 flex gap-2">
                   <button
                     onClick={() => handleQuickStatus(bus, bus.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE')}
+                    disabled={isSold}
                     className="flex-1 text-xs font-medium py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors"
                   >
-                    {bus.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                    {isSold ? 'Sold' : (bus.status === 'ACTIVE' ? 'Deactivate' : 'Activate')}
                   </button>
                   <button
                     onClick={() => handleQuickStatus(bus, 'MAINTENANCE')}
-                    disabled={bus.status === 'MAINTENANCE'}
+                    disabled={isSold || bus.status === 'MAINTENANCE'}
                     className="flex-1 text-xs font-medium py-2 rounded-lg bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors disabled:opacity-40"
                   >
                     Maintenance
@@ -231,6 +367,68 @@ const BusManagement: React.FC = () => {
           onClose={() => { setShowForm(false); setEditingBus(null); setFormError(null); }}
           onSubmit={handleFormSubmit}
         />
+      )}
+
+      {pinModal && (
+        <BusPinModal
+          bus={pinModal.bus}
+          mode={pinModal.mode}
+          saving={pinSaving}
+          error={pinError}
+          onClose={() => { if (!pinSaving) setPinModal(null); }}
+          onSubmit={submitPin}
+        />
+      )}
+
+      {statusModalBus && (
+        <BusStatusModal
+          bus={statusModalBus}
+          saving={statusSaving}
+          error={statusError}
+          onClose={() => { if (!statusSaving) setStatusModalBus(null); }}
+          onSubmit={(status) => submitStatus(statusModalBus, status)}
+        />
+      )}
+
+      {confirmSoldBus && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center pt-10 px-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl mb-10">
+            <div className="p-6 border-b border-slate-100">
+              <h2 className="text-xl font-bold text-slate-900">Mark as SOLD</h2>
+              <p className="text-sm text-slate-500 mt-1">
+                {confirmSoldBus.registrationNumber} will remain in history, but should not be used for future operations.
+              </p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {soldError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+                  {soldError}
+                </p>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setConfirmSoldBus(null)}
+                  disabled={soldSaving}
+                  className="flex-1 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 font-medium text-slate-600 hover:bg-slate-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={submitMarkSold}
+                  disabled={soldSaving}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl text-sm font-medium hover:shadow-lg hover:shadow-amber-500/25 transition-all disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  {soldSaving && <Loader2 className="w-4 h-4 animate-spin" />}
+                  Confirm SOLD
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
