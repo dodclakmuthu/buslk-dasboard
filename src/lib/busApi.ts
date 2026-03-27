@@ -76,3 +76,27 @@ export async function updateBusStatus(token: string, id: string, status: BusStat
     body: JSON.stringify({ status }),
   });
 }
+
+export async function addOperationalExpense(
+  token: string,
+  busId: string,
+  input: { category: string; amount: number; description?: string },
+): Promise<{ expense: any }> {
+  return apiRequest(`/buses/${busId}/operational-expenses`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(input),
+  });
+}
+
+export async function addOperationalIncome(
+  token: string,
+  busId: string,
+  input: { category: string; amount: number; description?: string },
+): Promise<{ income: any }> {
+  return apiRequest(`/buses/${busId}/operational-incomes`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(input),
+  });
+}

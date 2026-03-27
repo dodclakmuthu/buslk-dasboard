@@ -110,6 +110,20 @@ export interface Expense {
   timestamp: string;
 }
 
+export type ExtraIncomeCategory = 'PARCEL' | 'BAGGAGE' | 'OTHER_EXTRA_INCOME';
+
+export interface ExtraIncome {
+  id: string;
+  tripId?: string;
+  busId: string;
+  date: string;
+  category: ExtraIncomeCategory;
+  amount: number;
+  note?: string;
+  enteredBy: string;
+  timestamp: string;
+}
+
 export interface DailySettlement {
   id: string;
   busId: string;
