@@ -17,6 +17,11 @@ export type ApiBus = {
   createdAt: string;
   updatedAt: string;
   route?: { id: string; routeName: string; routeCode?: string | null } | null;
+  wageModel: 'PERCENTAGE' | 'FIXED';
+  driverPercentage: number | null;
+  conductorPercentage: number | null;
+  fixedDriverWage: number | null;
+  fixedConductorWage: number | null;
 };
 
 export type CreateBusInput = {
@@ -25,6 +30,11 @@ export type CreateBusInput = {
   ntcPermitNumber?: string;
   seatCount?: number;
   status?: BusStatus;
+  wageModel?: 'PERCENTAGE' | 'FIXED';
+  driverPercentage?: number | null;
+  conductorPercentage?: number | null;
+  fixedDriverWage?: number | null;
+  fixedConductorWage?: number | null;
 };
 
 export type UpdateBusInput =

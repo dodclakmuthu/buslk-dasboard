@@ -13,6 +13,11 @@ type FormState = {
   status: BusStatus;
   defaultDriverStaffId: string;
   defaultConductorStaffId: string;
+  wageModel: 'PERCENTAGE' | 'FIXED';
+  driverPercentage: string;
+  conductorPercentage: string;
+  fixedDriverWage: string;
+  fixedConductorWage: string;
 };
 
 const defaultForm = (): FormState => ({
@@ -23,6 +28,11 @@ const defaultForm = (): FormState => ({
   status: 'ACTIVE',
   defaultDriverStaffId: '',
   defaultConductorStaffId: '',
+  wageModel: 'PERCENTAGE',
+  driverPercentage: '',
+  conductorPercentage: '',
+  fixedDriverWage: '',
+  fixedConductorWage: '',
 });
 
 type Props = {
@@ -59,6 +69,11 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
           status: editing.status,
           defaultDriverStaffId: editing.defaultDriverStaffId ?? '',
           defaultConductorStaffId: editing.defaultConductorStaffId ?? '',
+          wageModel: editing.wageModel ?? 'PERCENTAGE',
+          driverPercentage: editing.driverPercentage != null ? String(editing.driverPercentage) : '',
+          conductorPercentage: editing.conductorPercentage != null ? String(editing.conductorPercentage) : '',
+          fixedDriverWage: editing.fixedDriverWage != null ? String(editing.fixedDriverWage) : '',
+          fixedConductorWage: editing.fixedConductorWage != null ? String(editing.fixedConductorWage) : '',
         }
       : defaultForm(),
   );
@@ -103,6 +118,11 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
       ...(form.ntcPermitNumber.trim() && { ntcPermitNumber: form.ntcPermitNumber.trim() }),
       ...(form.seatCount && { seatCount: parseInt(form.seatCount, 10) }),
       status: form.status,
+      wageModel: form.wageModel,
+      ...(form.driverPercentage !== '' && { driverPercentage: parseFloat(form.driverPercentage) }),
+      ...(form.conductorPercentage !== '' && { conductorPercentage: parseFloat(form.conductorPercentage) }),
+      ...(form.fixedDriverWage !== '' && { fixedDriverWage: parseFloat(form.fixedDriverWage) }),
+      ...(form.fixedConductorWage !== '' && { fixedConductorWage: parseFloat(form.fixedConductorWage) }),
     };
 
     // Defaults are only supported on update (edit mode).
@@ -194,6 +214,57 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
           <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-500 flex items-center gap-2">
             <span className="text-slate-400">🗺</span>
             Route assignment will be available once routes are configured in the Routes module.
+          </div>
+
+          {/* Wage Settings */}
+          <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-4">
+            <p className="text-sm font-semibold text-slate-900">Wage Settings</p>
+            <div>
+              <label className={labelCls}>Wage Model</label>
+              <select value={form.wageModel} onChange={set('wageModel')} className={inputCls}>
+                <option value="PERCENTAGE">Percentage of Daily Income</option>
+                <option value="FIXED">Fixed Daily Wage</option>
+              </select>
+            </div>
+            {form.wageModel === 'PERCENTAGE' ? (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Driver %</label>
+                  <input type="number" min={0} max={100} step={0.5}
+                    value={form.driverPercentage}
+                    onChange={set('driverPercentage')}
+                    placeholder="e.g. 12"
+                    className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Conductor %</label>
+                  <input type="number" min={0} max={100} step={0.5}
+                    value={form.conductorPercentage}
+                    onChange={set('conductorPercentage')}
+                    placeholder="e.g. 8"
+                    className={inputCls} />
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={labelCls}>Driver Wage (Rs.)</label>
+                  <input type="number" min={0}
+                    value={form.fixedDriverWage}
+                    onChange={set('fixedDriverWage')}
+                    placeholder="e.g. 4500"
+                    className={inputCls} />
+                </div>
+                <div>
+                  <label className={labelCls}>Conductor Wage (Rs.)</label>
+                  <input type="number" min={0}
+                    value={form.fixedConductorWage}
+                    onChange={set('fixedConductorWage')}
+                    placeholder="e.g. 3500"
+                    className={inputCls} />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Default crew (optional) */}

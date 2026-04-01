@@ -130,3 +130,33 @@
 .markdown-preview ol {
   @apply my-4 ml-6;
 }
+
+/* ── Print styles (Daily Settlement) ───────────────────────────────────────── */
+@media print {
+  /* Preserve background colors / gradients in print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide chrome (sidebar, top header) */
+  aside { display: none !important; }
+  header { display: none !important; }
+
+  /* Reset sidebar-offset margin applied by AppLayout */
+  .lg\:ml-20 { margin-left: 0 !important; }
+  .lg\:ml-64 { margin-left: 0 !important; }
+
+  /* Hide interactive elements not useful in print */
+  .no-print { display: none !important; }
+
+  /* Clean page */
+  body { background: white !important; }
+  main {
+    padding: 0.5cm 1cm !important;
+    max-width: 100% !important;
+  }
+
+  /* Remove box shadows */
+  .shadow-sm { box-shadow: none !important; }
+}

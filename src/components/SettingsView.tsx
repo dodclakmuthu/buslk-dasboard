@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Settings, Building2, Bell, Shield, Globe, Save, CheckCircle2 } from 'lucide-react';
+import { Settings, Building2, Bell, Shield, Globe, Save, CheckCircle2, Loader2 } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompany } from '@/contexts/CompanyContext';
 import { updateMyCompany } from '@/lib/companyApi';
+import { getWageDefaults, updateWageDefaults } from '@/lib/settingsApi';
 import { ApiError } from '@/lib/api';
 
 const SettingsView: React.FC = () => {
@@ -32,13 +33,62 @@ const SettingsView: React.FC = () => {
   }, [company]);
 
   const [wageDefaults, setWageDefaults] = useState({
-    defaultWageModel: 'percentage',
     defaultDriverPercentage: 12,
     defaultConductorPercentage: 8,
     defaultFixedDriverWage: 4500,
     defaultFixedConductorWage: 3500,
     maxPercentageWarning: 50,
   });
+  const [wageLoading, setWageLoading] = useState(false);
+  const [isSavingWages, setIsSavingWages] = useState(false);
+  const [wageSaved, setWageSaved] = useState(false);
+  const [applyToBuses, setApplyToBuses] = useState(false);
+  const [overwriteAll, setOverwriteAll] = useState(false);
+
+  // Load wage defaults from backend when the wages tab is first selected
+  useEffect(() => {
+    if (activeTab !== 'wages' || !token) return;
+    setWageLoading(true);
+    getWageDefaults(token)
+      .then(data => {
+        setWageDefaults({
+          defaultDriverPercentage: data.defaultDriverPercentage ?? 12,
+          defaultConductorPercentage: data.defaultConductorPercentage ?? 8,
+          defaultFixedDriverWage: data.defaultFixedDriverWage ?? 4500,
+          defaultFixedConductorWage: data.defaultFixedConductorWage ?? 3500,
+          maxPercentageWarning: data.maxCombinedPercentageWarning ?? 50,
+        });
+      })
+      .catch(() => { /* keep defaults on error */ })
+      .finally(() => setWageLoading(false));
+  }, [activeTab, token]);
+
+  const handleSaveWages = async () => {
+    if (!token) return;
+    setIsSavingWages(true);
+    try {
+      const res = await updateWageDefaults(token, {
+        defaultDriverPercentage: wageDefaults.defaultDriverPercentage,
+        defaultConductorPercentage: wageDefaults.defaultConductorPercentage,
+        defaultFixedDriverWage: wageDefaults.defaultFixedDriverWage,
+        defaultFixedConductorWage: wageDefaults.defaultFixedConductorWage,
+        maxCombinedPercentageWarning: wageDefaults.maxPercentageWarning,
+        applyToBuses,
+        overwriteAll: applyToBuses ? overwriteAll : undefined,
+      });
+      setWageSaved(true);
+      const busMsg = res.busesUpdated != null
+        ? ` ${res.busesUpdated} bus${res.busesUpdated !== 1 ? 'es' : ''} updated.`
+        : '';
+      toast({ title: 'Wage Defaults Saved', description: `Default wage settings have been updated.${busMsg}` });
+      setTimeout(() => setWageSaved(false), 2000);
+    } catch (err) {
+      const message = err instanceof ApiError ? err.message : 'Failed to save wage defaults';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
+    } finally {
+      setIsSavingWages(false);
+    }
+  };
 
   const handleSave = () => {
     setSaved(true);
@@ -142,43 +192,75 @@ const SettingsView: React.FC = () => {
             <div className="space-y-5">
               <h2 className="text-lg font-semibold text-slate-900">Default Wage Settings</h2>
               <p className="text-sm text-slate-500">These defaults apply when creating new buses. Individual bus settings can override these.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Default Driver %</label>
-                  <input type="number" value={wageDefaults.defaultDriverPercentage}
-                    onChange={e => setWageDefaults(p => ({ ...p, defaultDriverPercentage: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+              {wageLoading ? (
+                <div className="flex items-center justify-center py-10">
+                  <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Default Conductor %</label>
-                  <input type="number" value={wageDefaults.defaultConductorPercentage}
-                    onChange={e => setWageDefaults(p => ({ ...p, defaultConductorPercentage: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Default Driver %</label>
+                    <input type="number" value={wageDefaults.defaultDriverPercentage}
+                      onChange={e => setWageDefaults(p => ({ ...p, defaultDriverPercentage: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Default Conductor %</label>
+                    <input type="number" value={wageDefaults.defaultConductorPercentage}
+                      onChange={e => setWageDefaults(p => ({ ...p, defaultConductorPercentage: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Default Fixed Driver Wage (Rs.)</label>
+                    <input type="number" value={wageDefaults.defaultFixedDriverWage}
+                      onChange={e => setWageDefaults(p => ({ ...p, defaultFixedDriverWage: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Default Fixed Conductor Wage (Rs.)</label>
+                    <input type="number" value={wageDefaults.defaultFixedConductorWage}
+                      onChange={e => setWageDefaults(p => ({ ...p, defaultFixedConductorWage: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Max Combined Percentage Warning (%)</label>
+                    <input type="number" value={wageDefaults.maxPercentageWarning}
+                      onChange={e => setWageDefaults(p => ({ ...p, maxPercentageWarning: parseFloat(e.target.value) || 0 }))}
+                      className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
+                    <p className="text-xs text-slate-400 mt-1">System will warn if driver% + conductor% exceeds this value</p>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Default Fixed Driver Wage (Rs.)</label>
-                  <input type="number" value={wageDefaults.defaultFixedDriverWage}
-                    onChange={e => setWageDefaults(p => ({ ...p, defaultFixedDriverWage: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Default Fixed Conductor Wage (Rs.)</label>
-                  <input type="number" value={wageDefaults.defaultFixedConductorWage}
-                    onChange={e => setWageDefaults(p => ({ ...p, defaultFixedConductorWage: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Max Combined Percentage Warning (%)</label>
-                  <input type="number" value={wageDefaults.maxPercentageWarning}
-                    onChange={e => setWageDefaults(p => ({ ...p, maxPercentageWarning: parseFloat(e.target.value) || 0 }))}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-900 outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500" />
-                  <p className="text-xs text-slate-400 mt-1">System will warn if driver% + conductor% exceeds this value</p>
-                </div>
+              )}
+              {/* Apply-to-buses options */}
+              <div className="border-t border-slate-100 pt-4 space-y-2.5">
+                <label className="flex items-center gap-3 cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={applyToBuses}
+                    onChange={e => { setApplyToBuses(e.target.checked); if (!e.target.checked) setOverwriteAll(false); }}
+                    className="w-4 h-4 rounded border-slate-300 text-amber-500 accent-amber-500"
+                  />
+                  <span className="text-sm text-slate-700">Apply these defaults to buses</span>
+                </label>
+                {applyToBuses && (
+                  <label className="flex items-center gap-3 cursor-pointer select-none ml-7">
+                    <input
+                      type="checkbox"
+                      checked={overwriteAll}
+                      onChange={e => setOverwriteAll(e.target.checked)}
+                      className="w-4 h-4 rounded border-slate-300 text-amber-500 accent-amber-500"
+                    />
+                    <span className="text-sm text-slate-600">Overwrite buses that already have wage settings</span>
+                  </label>
+                )}
+                {applyToBuses && !overwriteAll && (
+                  <p className="text-xs text-slate-400 ml-7">Only buses with no wage info configured will be updated.</p>
+                )}
               </div>
-              <button onClick={handleSave}
-                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all">
-                {saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                {saved ? 'Saved!' : 'Save Defaults'}
+              <button onClick={handleSaveWages} disabled={isSavingWages}
+                className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all disabled:opacity-60">
+                {isSavingWages ? <Loader2 className="w-4 h-4 animate-spin" /> : wageSaved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
+                {isSavingWages ? 'Saving…' : wageSaved ? 'Saved!' : 'Save Defaults'}
               </button>
             </div>
           )}
