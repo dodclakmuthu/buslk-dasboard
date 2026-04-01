@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompany } from '@/contexts/CompanyContext';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/data/mockData';
 import {
@@ -15,6 +16,7 @@ import {
   type ApiSettlementDetailResponse,
   type ApiSettlementCard,
 } from '@/lib/settlementApi';
+import { printBusSettlement, printAllSettlements } from '@/lib/printSettlement';
 
 function getSLToday(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });
@@ -22,6 +24,7 @@ function getSLToday(): string {
 
 const DailySettlement: React.FC = () => {
   const { token } = useAuth();
+  const { company } = useCompany();
   const { toast } = useToast();
 
   const [selectedDate, setSelectedDate] = useState(getSLToday);
@@ -34,6 +37,7 @@ const DailySettlement: React.FC = () => {
   const [busDetailLoading, setBusDetailLoading] = useState<Record<string, boolean>>({});
 
   const [lockingBus, setLockingBus] = useState<string | null>(null);
+  const [printingBus, setPrintingBus] = useState<string | null>(null);
 
   const loadSettlements = useCallback(async (date: string) => {
     if (!token) { setLoading(false); return; }
@@ -73,6 +77,26 @@ const DailySettlement: React.FC = () => {
     }
   };
 
+  const handlePrintBus = async (card: ApiSettlementCard, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!token) return;
+    const busId = card.busId;
+    let detail = busDetails[busId] ?? null;
+    if (!detail) {
+      setPrintingBus(busId);
+      try {
+        const fetched = await getBusSettlementDetail(token, busId, selectedDate);
+        setBusDetails(prev => ({ ...prev, [busId]: fetched }));
+        detail = fetched;
+      } catch {
+        // print with summary only if detail fetch fails
+      } finally {
+        setPrintingBus(null);
+      }
+    }
+    printBusSettlement(card, detail, selectedDate, company?.name ?? 'Your Company');
+  };
+
   const handleLock = async (busId: string) => {
     if (!token) return;
     setLockingBus(busId);
@@ -101,11 +125,12 @@ const DailySettlement: React.FC = () => {
         </div>
         <div className="flex items-center gap-3 no-print">
           <button
-            onClick={() => window.print()}
-            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+            onClick={() => data && printAllSettlements(data, company?.name ?? 'Your Company')}
+            disabled={!data}
+            className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-40"
           >
             <Printer className="w-4 h-4" />
-            Print
+            Print Report
           </button>
           <input
             type="date"
@@ -230,6 +255,16 @@ const DailySettlement: React.FC = () => {
                               {formatCurrency(card.netProfit)}
                             </p>
                           </div>
+                          <button
+                            onClick={e => void handlePrintBus(card, e)}
+                            disabled={printingBus === card.busId}
+                            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors no-print"
+                            title="Print this settlement"
+                          >
+                            {printingBus === card.busId
+                              ? <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                              : <Printer className="w-4 h-4 text-slate-400" />}
+                          </button>
                           {isExpanded ? <ChevronUp className="w-5 h-5 text-slate-400" /> : <ChevronDown className="w-5 h-5 text-slate-400" />}
                         </div>
                       </div>
