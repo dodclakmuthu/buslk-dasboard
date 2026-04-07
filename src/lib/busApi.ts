@@ -16,7 +16,12 @@ export type ApiBus = {
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-  route?: { id: string; routeName: string; routeCode?: string | null } | null;
+  route?: {
+    id: string;
+    routeName: string;
+    routeCode?: string | null;
+    sourceType: 'GLOBAL' | 'COMPANY_PRIVATE' | 'COMPANY_REQUEST';
+  } | null;
   wageModel: 'PERCENTAGE' | 'FIXED';
   driverPercentage: number | null;
   conductorPercentage: number | null;
@@ -28,6 +33,7 @@ export type CreateBusInput = {
   registrationNumber: string;
   busName?: string;
   ntcPermitNumber?: string;
+  routeId?: string | null;
   seatCount?: number;
   status?: BusStatus;
   wageModel?: 'PERCENTAGE' | 'FIXED';
@@ -41,6 +47,7 @@ export type UpdateBusInput =
   Partial<CreateBusInput> & {
     defaultDriverStaffId?: string | null;
     defaultConductorStaffId?: string | null;
+    confirmationPin?: string;
   };
 
 export async function listBuses(token: string): Promise<{ buses: ApiBus[] }> {
@@ -74,6 +81,14 @@ export async function setBusPin(token: string, id: string, pin: string): Promise
 export async function resetBusPin(token: string, id: string, pin: string): Promise<{ pin: any }> {
   return apiRequest(`/buses/${id}/pin/reset`, {
     method: 'PATCH',
+    token,
+    body: JSON.stringify({ pin }),
+  });
+}
+
+export async function verifyBusPin(token: string, id: string, pin: string): Promise<{ verified: boolean }> {
+  return apiRequest(`/buses/${id}/pin/verify`, {
+    method: 'POST',
     token,
     body: JSON.stringify({ pin }),
   });

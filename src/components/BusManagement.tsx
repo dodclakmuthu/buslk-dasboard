@@ -40,6 +40,13 @@ const BusManagement: React.FC = () => {
   const [pinModal, setPinModal] = useState<{ bus: ApiBus; mode: 'set' | 'reset' } | null>(null);
   const [pinSaving, setPinSaving] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
+  const [pendingEdit, setPendingEdit] = useState<{
+    bus: ApiBus;
+    input: CreateBusInput & {
+      defaultDriverStaffId?: string | null;
+      defaultConductorStaffId?: string | null;
+    };
+  } | null>(null);
 
   const [statusModalBus, setStatusModalBus] = useState<ApiBus | null>(null);
   const [statusSaving, setStatusSaving] = useState(false);
@@ -72,14 +79,16 @@ const BusManagement: React.FC = () => {
     },
   ) => {
     if (!token) return;
+    if (editingBus) {
+      setFormError(null);
+      setPendingEdit({ bus: editingBus, input });
+      return;
+    }
+
     setSaving(true);
     setFormError(null);
     try {
-      if (editingBus) {
-        const { bus } = await updateBus(token, editingBus.id, input as UpdateBusInput);
-        setBuses(prev => prev.map(b => (b.id === bus.id ? bus : b)));
-        toast({ title: 'Bus updated', description: `${bus.registrationNumber} saved.` });
-      } else {
+      {
         const { defaultDriverStaffId: _dd, defaultConductorStaffId: _dc, ...createInput } = input;
         const { bus } = await createBus(token, createInput);
         setBuses(prev => [...prev, bus]);
@@ -90,6 +99,32 @@ const BusManagement: React.FC = () => {
     } catch (err: any) {
       setFormError(err.message ?? 'Something went wrong');
     } finally {
+      setSaving(false);
+    }
+  };
+
+  const submitEditConfirmation = async (pin: string) => {
+    if (!token || !pendingEdit) return;
+    setPinSaving(true);
+    setPinError(null);
+    setSaving(true);
+    setFormError(null);
+    try {
+      const { bus } = await updateBus(token, pendingEdit.bus.id, {
+        ...(pendingEdit.input as UpdateBusInput),
+        confirmationPin: pin,
+      });
+      setBuses(prev => prev.map(b => (b.id === bus.id ? bus : b)));
+      toast({ title: 'Bus updated', description: `${bus.registrationNumber} saved.` });
+      setPendingEdit(null);
+      setShowForm(false);
+      setEditingBus(null);
+    } catch (err: any) {
+      const message = err.message ?? 'Failed to update bus';
+      setPinError(message);
+      setFormError(message);
+    } finally {
+      setPinSaving(false);
       setSaving(false);
     }
   };
@@ -377,6 +412,22 @@ const BusManagement: React.FC = () => {
           error={pinError}
           onClose={() => { if (!pinSaving) setPinModal(null); }}
           onSubmit={submitPin}
+        />
+      )}
+
+      {pendingEdit && (
+        <BusPinModal
+          bus={pendingEdit.bus}
+          mode="verify"
+          saving={pinSaving}
+          error={pinError}
+          onClose={() => {
+            if (!pinSaving) {
+              setPendingEdit(null);
+              setPinError(null);
+            }
+          }}
+          onSubmit={submitEditConfirmation}
         />
       )}
 
