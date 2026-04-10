@@ -4,11 +4,16 @@ import { ApiBus, BusStatus, CreateBusInput } from '@/lib/busApi';
 import { useAuth } from '@/contexts/AuthContext';
 import type { ApiStaff } from '@/lib/staffApi';
 import { listStaff } from '@/lib/staffApi';
+import type { ApiCompanyRoute, ApiGlobalRoute } from '@/lib/routeApi';
+import { listCompanyRoutes, listGlobalRoutes } from '@/lib/routeApi';
+
+type RouteScope = 'public' | 'private';
 
 type FormState = {
   registrationNumber: string;
   busName: string;
   ntcPermitNumber: string;
+  routeId: string;
   seatCount: string;
   status: BusStatus;
   defaultDriverStaffId: string;
@@ -24,6 +29,7 @@ const defaultForm = (): FormState => ({
   registrationNumber: '',
   busName: '',
   ntcPermitNumber: '',
+  routeId: '',
   seatCount: '',
   status: 'ACTIVE',
   defaultDriverStaffId: '',
@@ -56,8 +62,15 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
   const { token } = useAuth();
 
   const [staff, setStaff] = useState<ApiStaff[]>([]);
+  const [publicRoutes, setPublicRoutes] = useState<ApiGlobalRoute[]>([]);
+  const [privateRoutes, setPrivateRoutes] = useState<ApiCompanyRoute[]>([]);
+  const [routeScope, setRouteScope] = useState<RouteScope>(() =>
+    editing?.route?.sourceType === 'COMPANY_PRIVATE' ? 'private' : 'public',
+  );
   const [staffLoading, setStaffLoading] = useState(false);
   const [staffError, setStaffError] = useState<string | null>(null);
+  const [routesLoading, setRoutesLoading] = useState(false);
+  const [routesError, setRoutesError] = useState<string | null>(null);
 
   const [form, setForm] = useState<FormState>(() =>
     editing
@@ -65,6 +78,7 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
           registrationNumber: editing.registrationNumber,
           busName: editing.busName ?? '',
           ntcPermitNumber: editing.ntcPermitNumber ?? '',
+          routeId: editing.routeId ?? '',
           seatCount: editing.seatCount != null ? String(editing.seatCount) : '',
           status: editing.status,
           defaultDriverStaffId: editing.defaultDriverStaffId ?? '',
@@ -77,6 +91,53 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
         }
       : defaultForm(),
   );
+
+  useEffect(() => {
+    setForm(
+      editing
+        ? {
+            registrationNumber: editing.registrationNumber,
+            busName: editing.busName ?? '',
+            ntcPermitNumber: editing.ntcPermitNumber ?? '',
+            routeId: editing.routeId ?? '',
+            seatCount: editing.seatCount != null ? String(editing.seatCount) : '',
+            status: editing.status,
+            defaultDriverStaffId: editing.defaultDriverStaffId ?? '',
+            defaultConductorStaffId: editing.defaultConductorStaffId ?? '',
+            wageModel: editing.wageModel ?? 'PERCENTAGE',
+            driverPercentage: editing.driverPercentage != null ? String(editing.driverPercentage) : '',
+            conductorPercentage: editing.conductorPercentage != null ? String(editing.conductorPercentage) : '',
+            fixedDriverWage: editing.fixedDriverWage != null ? String(editing.fixedDriverWage) : '',
+            fixedConductorWage: editing.fixedConductorWage != null ? String(editing.fixedConductorWage) : '',
+          }
+        : defaultForm(),
+    );
+    setRouteScope(editing?.route?.sourceType === 'COMPANY_PRIVATE' ? 'private' : 'public');
+  }, [editing]);
+
+  useEffect(() => {
+    if (!token) return;
+    setRoutesLoading(true);
+    setRoutesError(null);
+    void (async () => {
+      try {
+        const [globalRes, companyRes] = await Promise.all([
+          listGlobalRoutes(token),
+          listCompanyRoutes(token),
+        ]);
+        setPublicRoutes(globalRes.routes.filter((route) => route.isActive));
+        setPrivateRoutes(
+          companyRes.routes.filter(
+            (route) => route.isActive && route.sourceType !== 'GLOBAL',
+          ),
+        );
+      } catch (err: any) {
+        setRoutesError(err?.message ?? 'Failed to load routes');
+      } finally {
+        setRoutesLoading(false);
+      }
+    })();
+  }, [token]);
 
   useEffect(() => {
     if (!editing || !token) return;
@@ -103,6 +164,10 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
     () => activeStaff.filter(s => s.roleType === 'CONDUCTOR' || s.roleType === 'DRIVER_CONDUCTOR'),
     [activeStaff],
   );
+  const routeOptions = routeScope === 'public' ? publicRoutes : privateRoutes;
+  const routeScopeHint = routeScope === 'public'
+    ? 'Public: Sri Lanka NTC approved public transport routes.'
+    : 'Private: company-owned routes for hires, staff services, and internal transport.';
 
   const set = (key: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm(prev => ({ ...prev, [key]: e.target.value }));
@@ -116,6 +181,7 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
       registrationNumber: form.registrationNumber.trim(),
       ...(form.busName.trim() && { busName: form.busName.trim() }),
       ...(form.ntcPermitNumber.trim() && { ntcPermitNumber: form.ntcPermitNumber.trim() }),
+      ...(form.routeId && { routeId: form.routeId }),
       ...(form.seatCount && { seatCount: parseInt(form.seatCount, 10) }),
       status: form.status,
       wageModel: form.wageModel,
@@ -127,6 +193,7 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
 
     // Defaults are only supported on update (edit mode).
     if (editing) {
+      input.routeId = form.routeId ? form.routeId : null;
       input.defaultDriverStaffId = form.defaultDriverStaffId ? form.defaultDriverStaffId : null;
       input.defaultConductorStaffId = form.defaultConductorStaffId ? form.defaultConductorStaffId : null;
     }
@@ -210,10 +277,90 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
             </select>
           </div>
 
-          {/* Route — deferred */}
-          <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-500 flex items-center gap-2">
-            <span className="text-slate-400">🗺</span>
-            Route assignment will be available once routes are configured in the Routes module.
+          <div className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Route Assignment</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Choose whether this bus runs on a public transport route or a company-owned private route.
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setRouteScope('public');
+                  setForm((prev) => ({ ...prev, routeId: '' }));
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  routeScope === 'public'
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                Public Routes
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setRouteScope('private');
+                  setForm((prev) => ({ ...prev, routeId: '' }));
+                }}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors ${
+                  routeScope === 'private'
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-white text-slate-600 border-slate-300 hover:bg-slate-50'
+                }`}
+              >
+                Private Routes
+              </button>
+            </div>
+
+            <div className={`rounded-xl border px-4 py-3 text-sm ${
+              routeScope === 'public'
+                ? 'bg-amber-50 border-amber-200 text-amber-800'
+                : 'bg-slate-50 border-slate-200 text-slate-700'
+            }`}>
+              {routeScopeHint}
+            </div>
+
+            {routesError ? (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-2.5">
+                {routesError}
+              </p>
+            ) : routeOptions.length === 0 && !routesLoading ? (
+              <div className="bg-slate-50 rounded-xl p-4 text-sm text-slate-500 flex items-center gap-2">
+                <span className="text-slate-400">🗺</span>
+                {routeScope === 'public'
+                  ? 'No active global public routes are available right now.'
+                  : 'No active private company routes are available right now.'}
+              </div>
+            ) : (
+              <div>
+                <label className={labelCls}>Assigned Route</label>
+                <select
+                  value={form.routeId}
+                  onChange={set('routeId')}
+                  className={inputCls}
+                  disabled={routesLoading}
+                >
+                  <option value="">No route assigned</option>
+                  {routeOptions.map((route) => (
+                    <option key={route.id} value={route.id}>
+                      {(route.routeNumber ?? route.routeCode ?? 'Route')} - {route.routeName}
+                    </option>
+                  ))}
+                </select>
+                {routesLoading && <p className="text-xs text-slate-500 mt-2">Loading routes...</p>}
+                {!routesLoading && (
+                  <p className="text-xs text-slate-500 mt-2">
+                    {routeScope === 'public'
+                      ? 'Public routes come from the national NTC-approved route catalog.'
+                      : 'Private routes are company-owned services such as hires and staff transport.'}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Wage Settings */}
