@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
+import { useNotifications } from '@/contexts/NotificationsContext';
 import {
   LayoutDashboard, Bus, MapPin, Users, Route, Receipt,
   Calculator, BarChart3, Bell, Settings, FileText, X, ChevronRight
@@ -33,7 +34,8 @@ const navItems = [
 ];
 
 const Sidebar: React.FC = () => {
-  const { sidebarOpen, toggleSidebar, unreadNotificationCount } = useAppContext();
+  const { sidebarOpen, toggleSidebar } = useAppContext();
+  const { unreadCount } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -96,11 +98,11 @@ const Sidebar: React.FC = () => {
                     <span className={`text-sm font-medium ${!sidebarOpen ? 'lg:hidden' : ''}`}>
                       {item.label}
                     </span>
-                    {item.id === 'notifications' && unreadNotificationCount > 0 && (
+                    {item.id === 'notifications' && unreadCount > 0 && (
                       <span className={`bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center
                         ${!sidebarOpen ? 'lg:absolute lg:top-0 lg:right-0 lg:w-4 lg:h-4' : 'ml-auto w-5 h-5'}
                       `}>
-                        {unreadNotificationCount}
+                        {unreadCount}
                       </span>
                     )}
                     {isActive && (

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
+import { useNotifications } from '@/contexts/NotificationsContext';
 import Sidebar from './Sidebar';
 import { Menu, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +20,8 @@ const PATH_LABEL: Record<string, string> = {
 };
 
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { sidebarOpen, toggleSidebar, unreadNotificationCount } = useAppContext();
+  const { sidebarOpen, toggleSidebar } = useAppContext();
+  const { unreadCount } = useNotifications();
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -54,9 +56,9 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 className="relative p-2 hover:bg-slate-100 rounded-xl transition-colors"
               >
                 <Bell className="w-5 h-5 text-slate-600" />
-                {unreadNotificationCount > 0 && (
+                {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">
-                    {unreadNotificationCount}
+                    {unreadCount}
                   </span>
                 )}
               </button>
