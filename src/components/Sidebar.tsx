@@ -39,6 +39,14 @@ const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const handleNavigate = (path: string) => {
+    navigate(path);
+
+    if (typeof window !== 'undefined' && window.innerWidth < 1024 && sidebarOpen) {
+      toggleSidebar();
+    }
+  };
+
   return (
     <>
       {/* Overlay for mobile */}
@@ -77,14 +85,13 @@ const Sidebar: React.FC = () => {
             {navItems.map(item => {
               const Icon = item.icon;
               const itemPath = VIEW_PATH[item.id];
-              const isActive = location.pathname === itemPath;
+              const isActive =
+                location.pathname === itemPath ||
+                (itemPath === '/reports' && location.pathname.startsWith('/reports/'));
               return (
                 <li key={item.id}>
                   <button
-                    onClick={() => {
-                      navigate(itemPath);
-                      if (sidebarOpen) toggleSidebar();
-                    }}
+                    onClick={() => handleNavigate(itemPath)}
                     className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative
                       ${isActive
                         ? 'bg-gradient-to-r from-amber-500/20 to-orange-500/10 text-amber-400 border border-amber-500/20'

@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotifications } from '@/contexts/NotificationsContext';
 import { AlertTriangle, Info, CheckCircle2, AlertCircle, Check, RefreshCw } from 'lucide-react';
+import { NotificationsPageSkeleton } from './PageSkeletons';
 
 const NotificationsView: React.FC = () => {
   const navigate = useNavigate();
@@ -59,11 +60,7 @@ const NotificationsView: React.FC = () => {
       </div>
 
       <div className="space-y-3 max-h-[calc(100vh-14rem)] overflow-y-auto pr-1">
-        {isLoading && (
-          <div className="p-4 rounded-xl border bg-white border-slate-100 text-sm text-slate-500">
-            Loading notifications...
-          </div>
-        )}
+        {isLoading && <NotificationsPageSkeleton showHeader={false} />}
 
         {!isLoading && sorted.length === 0 && (
           <div className="p-4 rounded-xl border bg-white border-slate-100 text-sm text-slate-500">

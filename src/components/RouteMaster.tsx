@@ -34,6 +34,7 @@ import {
   updateCompanyRoute,
 } from '@/lib/routeApi';
 import { ApiError } from '@/lib/api';
+import { RouteMasterPageSkeleton } from './PageSkeletons';
 
 type StopItem = { id: string; locationName: string };
 
@@ -760,11 +761,7 @@ const RouteMaster: React.FC = () => {
         />
       </div>
 
-      {loading && (
-        <div className="flex items-center justify-center py-16 text-slate-400">
-          <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading routes...
-        </div>
-      )}
+      {loading && <RouteMasterPageSkeleton showHeader={false} />}
 
       {!loading && error && (
         <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">

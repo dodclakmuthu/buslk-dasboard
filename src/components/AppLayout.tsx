@@ -13,6 +13,7 @@ const PATH_LABEL: Record<string, string> = {
   '/staff': 'Staff & Crew',
   '/settlement': 'Daily Settlement',
   '/reports': 'Reports',
+  '/reports/performance': 'Performance Analytics',
   '/routes': 'Route Master',
   '/notifications': 'Notifications',
   '/blueprint': 'Product Blueprint',
@@ -26,7 +27,10 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const pageLabel = PATH_LABEL[location.pathname] ?? 'Dashboard';
+  const pageLabel =
+    PATH_LABEL[location.pathname] ??
+    (location.pathname.startsWith('/reports/') ? 'Reports' : 'Dashboard');
+  const isFullWidthPage = location.pathname === '/reports/performance';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -78,7 +82,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         </header>
 
         {/* Page Content */}
-        <main className="p-4 lg:p-8 max-w-7xl">
+        <main className={`p-4 lg:p-8 ${isFullWidthPage ? 'w-full' : 'max-w-7xl'}`}>
           {children}
         </main>
 

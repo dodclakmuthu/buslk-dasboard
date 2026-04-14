@@ -14,6 +14,7 @@ export type ApiBus = {
   defaultConductorStaffId?: string | null;
   status: BusStatus;
   isActive: boolean;
+  hasActivePin: boolean;
   createdAt: string;
   updatedAt: string;
   route?: {

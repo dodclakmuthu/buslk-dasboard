@@ -18,6 +18,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { getDashboardReport, type DashboardAlert, type DashboardReport } from '@/lib/dashboardApi';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { DashboardPageSkeleton } from './PageSkeletons';
 
 function formatCurrency(amount: number): string {
   return `Rs. ${amount.toLocaleString('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -264,11 +265,7 @@ const Dashboard: React.FC = () => {
         </div>
       )}
 
-      {isInitialLoading && (
-        <div className="flex items-center justify-center py-20 text-slate-400">
-          <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading dashboard…
-        </div>
-      )}
+      {isInitialLoading && <DashboardPageSkeleton showHeader={false} />}
 
       {!isInitialLoading && (
         <>

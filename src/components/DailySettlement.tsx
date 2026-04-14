@@ -17,6 +17,7 @@ import {
   type ApiSettlementCard,
 } from '@/lib/settlementApi';
 import { printBusSettlement, printAllSettlements } from '@/lib/printSettlement';
+import { SettlementPageSkeleton } from './PageSkeletons';
 
 function getSLToday(): string {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' });
@@ -142,11 +143,7 @@ const DailySettlement: React.FC = () => {
       </div>
 
       {/* Loading */}
-      {loading && (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-slate-400" />
-        </div>
-      )}
+      {loading && <SettlementPageSkeleton showHeader={false} />}
 
       {/* Error */}
       {!loading && error && (

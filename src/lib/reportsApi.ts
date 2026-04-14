@@ -323,3 +323,87 @@ export async function getRouteReport(
 ): Promise<RouteReportResponse> {
   return apiRequest(`/reports/routes${buildQuery(period)}`, { token });
 }
+
+// ── Performance analytics ────────────────────────────────────────────────────
+
+export type PerformanceCategory = 'DRIVERS' | 'CONDUCTORS' | 'BUSES';
+export type PerformanceMetric = 'income' | 'salary' | 'expenses';
+
+export type PerformanceSummaryStaff = {
+  id: string;
+  name: string;
+  role: string;
+  workingDays: number;
+  incomeOnWorkingDays: number;
+  salary: number;
+  expensesOnWorkingDays: number;
+};
+
+export type PerformanceSummaryBus = {
+  id: string;
+  registrationNumber: string;
+  routeName: string | null;
+  activeDays: number;
+  totalIncome: number;
+  totalExpenses: number;
+  netDTI: number;
+  tripCount: number;
+};
+
+export type PerformanceChartSeries = {
+  key: string;
+  label: string;
+  metric: PerformanceMetric;
+  entityId: string;
+  values: number[];
+};
+
+export type PerformanceReportResponse = {
+  data: {
+    filters: {
+      category: PerformanceCategory;
+      startDate: string;
+      endDate: string;
+      metric: PerformanceMetric;
+      entityIds: string[];
+    };
+    summary: Array<PerformanceSummaryStaff | PerformanceSummaryBus>;
+    chart: {
+      labels: string[];
+      series: PerformanceChartSeries[];
+    };
+  };
+};
+
+export type PerformanceReportParams = {
+  category: PerformanceCategory;
+  startDate: string;
+  endDate: string;
+  metric?: PerformanceMetric;
+  metrics?: PerformanceMetric[];
+  entityId?: string;
+  entityIds?: string[];
+};
+
+function buildPerformanceQuery(params: PerformanceReportParams): string {
+  const query = new URLSearchParams();
+  const metric = params.metric ?? params.metrics?.[0] ?? 'income';
+  const entityIds = params.entityIds ?? (params.entityId ? [params.entityId] : []);
+
+  query.set('category', params.category);
+  query.set('startDate', params.startDate);
+  query.set('endDate', params.endDate);
+  query.set('metric', metric);
+  if (entityIds.length > 0) query.set('entityIds', entityIds.join(','));
+  return `?${query.toString()}`;
+}
+
+export async function getPerformanceReport(
+  token: string,
+  params: PerformanceReportParams,
+): Promise<PerformanceReportResponse> {
+  return apiRequest(`/reports/performance${buildPerformanceQuery(params)}`, {
+    token,
+    cache: 'no-store',
+  });
+}

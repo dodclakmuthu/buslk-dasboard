@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useCompany } from '../contexts/CompanyContext';
+import { GuardScreenSkeleton } from './PageSkeletons';
 
 /**
  * CompanyRoute — sits inside ProtectedRoute (auth already verified).
@@ -12,11 +13,7 @@ export default function CompanyRoute() {
   const location = useLocation();
 
   if (isLoadingCompany) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <GuardScreenSkeleton />;
   }
 
   if (!hasCompany) {
