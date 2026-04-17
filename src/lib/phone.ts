@@ -4,8 +4,8 @@ export const PHONE_COUNTRIES = [
     label: 'Sri Lanka',
     flag: '🇱🇰',
     dialCode: '+94',
-    placeholder: '0771045601 or +94771045601',
-    invalidMessage: 'Invalid Sri Lanka mobile number. Use 0771045601 or +94771045601.',
+    placeholder: '0771045601',
+    invalidMessage: 'Invalid Sri Lanka mobile number. Enter it without the country code, for example 0771045601.',
   },
 ] as const;
 
@@ -23,11 +23,7 @@ export function sanitizePhoneInput(value: string): string {
   const compact = sanitizePhoneInputValue(value);
   if (!compact) return '';
 
-  const withoutExtraPlus = compact.startsWith('+')
-    ? `+${compact.slice(1).replace(/\+/g, '')}`
-    : compact.replace(/\+/g, '');
-
-  return withoutExtraPlus.replace(/[^\d+]/g, '');
+  return compact.replace(/\D/g, '');
 }
 
 export function getPhoneCountryByCode(code: SupportedPhoneCountryCode) {
@@ -46,27 +42,17 @@ export function normalizePhoneNumber(value: string, countryCode: SupportedPhoneC
     return null;
   }
 
-  if (compact.startsWith('+')) {
-    if (!/^\+\d+$/.test(compact) || !compact.startsWith('+94')) {
-      return null;
-    }
-
-    const nationalNumber = compact.slice(3);
-    if (!sriLankanMobilePattern.test(nationalNumber)) {
-      return null;
-    }
-
-    return `+94${nationalNumber}`;
-  }
-
   const digits = compact.replace(/\D/g, '');
-  let nationalNumber = digits;
 
   if (digits.startsWith('94')) {
-    nationalNumber = digits.slice(2);
-  } else if (digits.startsWith('0')) {
-    nationalNumber = digits.slice(1);
+    return null;
   }
+
+  if (!digits.startsWith('0')) {
+    return null;
+  }
+
+  const nationalNumber = digits.slice(1);
 
   if (!sriLankanMobilePattern.test(nationalNumber)) {
     return null;

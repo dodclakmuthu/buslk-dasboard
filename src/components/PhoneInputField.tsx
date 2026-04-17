@@ -90,10 +90,11 @@ export default function PhoneInputField({
         ref={inputRef}
         type="tel"
         autoComplete="tel"
-        placeholder="771 045 601"
+        placeholder={country.placeholder}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(sanitizePhoneInput(e.target.value))}
+        maxLength={10}
         className="min-w-0 flex-1 bg-transparent px-3 py-2 text-sm text-slate-900 outline-none placeholder:text-slate-400 disabled:cursor-not-allowed"
       />
     </div>
