@@ -4,6 +4,7 @@ import { useAppContext } from '@/contexts/AppContext';
 import Sidebar from './Sidebar';
 import { Menu, Bell, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import BrandMark from './BrandMark';
 
 const PATH_LABEL: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -44,7 +45,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
               </button>
               <div className="hidden sm:block">
                 <h2 className="text-sm font-semibold text-slate-900">{pageLabel}</h2>
-                <p className="text-[11px] text-slate-400">BusLK — Sri Lankan Bus Operations Platform</p>
+                <p className="text-[11px] text-slate-400">BusEka - Sri Lankan Bus Operations Platform</p>
               </div>
             </div>
 
@@ -84,20 +85,17 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <footer className="border-t border-slate-100 bg-white px-4 lg:px-8 py-6 mt-8">
           <div className="max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h8m-8 5h8m-4 5v-3m-6 3h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                </svg>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-slate-900">BusLK</p>
-                <p className="text-[11px] text-slate-400">Sri Lankan Bus Operations Platform</p>
-              </div>
+              <BrandMark
+                imageClassName="h-8"
+                textClassName="text-sm font-semibold tracking-tight text-slate-900"
+                subtitle="Sri Lankan Bus Operations Platform"
+                subtitleClassName="text-[11px] text-slate-400"
+              />
             </div>
             <div className="flex items-center gap-6 text-xs text-slate-400">
               <span>Version 1.0 MVP</span>
               <span>Built for Sri Lankan Private Bus Operators</span>
-              <span>2026 BusLK</span>
+              <span>2026 BusEka</span>
             </div>
           </div>
         </footer>

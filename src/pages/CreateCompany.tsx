@@ -20,7 +20,6 @@ import { ApiError } from '../lib/api';
 const schema = z.object({
   name: z.string().min(2, 'Company name is required'),
   businessType: z.string().optional(),
-  mobileNumber: z.string().max(20).optional().or(z.literal('')),
   address: z.string().max(255).optional().or(z.literal('')),
 });
 
@@ -35,7 +34,7 @@ const BUSINESS_TYPES = [
 
 export default function CreateCompany() {
   const { token } = useAuth();
-  const { hasCompany, setCompany, refreshCompany } = useCompany();
+  const { hasCompany, setCompany } = useCompany();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -51,7 +50,6 @@ export default function CreateCompany() {
     defaultValues: {
       name: '',
       businessType: 'individual_owner',
-      mobileNumber: '',
       address: '',
     },
   });
@@ -62,13 +60,12 @@ export default function CreateCompany() {
       const res = await createCompany(token, {
         name: values.name,
         businessType: values.businessType || undefined,
-        mobileNumber: values.mobileNumber || undefined,
         address: values.address || undefined,
       });
       setCompany(res.company);
       toast({
         title: 'Company created',
-        description: `${res.company.name} is ready. Welcome to BusLK!`,
+        description: `${res.company.name} is ready. Welcome to BusEka!`,
       });
       navigate('/dashboard', { replace: true });
     } catch (err) {
@@ -146,29 +143,6 @@ export default function CreateCompany() {
                         ))}
                       </SelectContent>
                     </Select>
-                    <FormMessage className="text-red-500" />
-                  </FormItem>
-                )}
-              />
-
-              {/* Mobile Number */}
-              <FormField
-                control={form.control}
-                name="mobileNumber"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-slate-700 font-medium">
-                      Contact number{' '}
-                      <span className="text-slate-400 font-normal">(optional)</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="07XXXXXXXX"
-                        autoComplete="tel"
-                        className={inputCls}
-                        {...field}
-                      />
-                    </FormControl>
                     <FormMessage className="text-red-500" />
                   </FormItem>
                 )}
