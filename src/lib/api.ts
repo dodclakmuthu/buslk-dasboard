@@ -10,6 +10,8 @@ export class ApiError extends Error {
   }
 }
 
+export const COOKIE_SESSION_TOKEN = '__cookie_session__';
+
 function getBaseUrl(): string {
   const base = import.meta.env.VITE_API_BASE_URL as string | undefined;
   return (base && base.trim().length > 0 ? base.trim() : 'http://localhost:3001').replace(/\/+$/, '');
@@ -22,9 +24,15 @@ export async function apiRequest<T>(
   const url = `${getBaseUrl()}${path.startsWith('/') ? '' : '/'}${path}`;
   const headers = new Headers(options.headers);
   if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
-  if (options.token) headers.set('Authorization', `Bearer ${options.token}`);
+  if (options.token && options.token !== COOKIE_SESSION_TOKEN) {
+    headers.set('Authorization', `Bearer ${options.token}`);
+  }
 
-  const res = await fetch(url, { ...options, headers });
+  const res = await fetch(url, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
 
   const text = await res.text();
   const data = text ? ((): unknown => {

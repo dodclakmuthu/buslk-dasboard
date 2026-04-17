@@ -5,6 +5,7 @@ import {
   LayoutDashboard, Bus, MapPin, Users, Route, Receipt,
   Calculator, BarChart3, Bell, Settings, FileText, X, ChevronRight
 } from 'lucide-react';
+import BrandMark from './BrandMark';
 
 const VIEW_PATH: Record<string, string> = {
   dashboard: '/dashboard',
@@ -56,13 +57,17 @@ const Sidebar: React.FC = () => {
         {/* Logo */}
         <div className="flex items-center justify-between p-4 border-b border-slate-700/50">
           <div className={`flex items-center gap-3 ${!sidebarOpen ? 'lg:justify-center lg:w-full' : ''}`}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0">
-              <Bus className="w-6 h-6 text-white" />
-            </div>
             <div className={`${!sidebarOpen ? 'lg:hidden' : ''}`}>
-              <h1 className="text-lg font-bold tracking-tight">BusLK</h1>
-              <p className="text-[10px] text-slate-400 -mt-0.5">Bus Operations Platform</p>
+              <BrandMark
+                imageClassName="h-10"
+                textClassName="text-lg font-bold tracking-tight text-white"
+                subtitle="Bus Operations Platform"
+                subtitleClassName="text-[10px] -mt-0.5 text-slate-400"
+              />
             </div>
+            {!sidebarOpen && (
+              <img src="/logo.png" alt="BusEka" className="hidden h-10 w-auto object-contain lg:block" />
+            )}
           </div>
           <button onClick={toggleSidebar} className="lg:hidden p-1 hover:bg-slate-700 rounded">
             <X className="w-5 h-5" />

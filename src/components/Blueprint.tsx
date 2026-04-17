@@ -491,7 +491,7 @@ GET    /api/reports/salary?range=  // Salary report`}</pre>
       icon: <Rocket className="w-5 h-5" />,
       content: (
         <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-xl p-6 text-white">
-          <h3 className="text-2xl font-bold mb-4">BusLK — Digitizing Sri Lanka's Private Bus Economy</h3>
+          <h3 className="text-2xl font-bold mb-4">BusEka - Digitizing Sri Lanka's Private Bus Economy</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div>
               <p className="text-amber-400 font-bold mb-1">The Problem</p>
@@ -519,7 +519,7 @@ GET    /api/reports/salary?range=  // Salary report`}</pre>
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">Product Blueprint</h1>
-        <p className="text-slate-500 mt-1">Complete product strategy, architecture, and roadmap for BusLK</p>
+        <p className="text-slate-500 mt-1">Complete product strategy, architecture, and roadmap for BusEka</p>
       </div>
 
       <div className="space-y-3">

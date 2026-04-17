@@ -1,5 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import * as authApi from '../lib/authApi';
+import { COOKIE_SESSION_TOKEN } from '../lib/api';
+import type { SignupChallenge } from '../lib/pendingSignup';
 
 type AuthState = {
   token: string | null;
@@ -7,54 +9,37 @@ type AuthState = {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (input: authApi.LoginInput) => Promise<void>;
-  signup: (input: authApi.SignupInput) => Promise<void>;
+  signup: (input: authApi.SignupInput) => Promise<SignupChallenge>;
+  verifySignupOtp: (input: authApi.VerifySignupOtpInput) => Promise<void>;
+  resendSignupOtp: (challengeId: string) => Promise<SignupChallenge>;
   logout: () => void;
   refreshMe: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthState | undefined>(undefined);
 
-const TOKEN_STORAGE_KEY = 'busapp.accessToken';
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [token, setToken] = useState<string | null>(() => {
-    try {
-      return localStorage.getItem(TOKEN_STORAGE_KEY);
-    } catch {
-      return null;
-    }
-  });
+  const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<authApi.AuthUser | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(!!token);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const persistToken = useCallback((nextToken: string | null) => {
     setToken(nextToken);
-    try {
-      if (nextToken) localStorage.setItem(TOKEN_STORAGE_KEY, nextToken);
-      else localStorage.removeItem(TOKEN_STORAGE_KEY);
-    } catch {
-      // ignore
-    }
   }, []);
 
   const refreshMe = useCallback(async () => {
-    if (!token) {
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-
     setIsLoading(true);
     try {
-      const res = await authApi.me(token);
+      const res = await authApi.me();
       setUser(res.user);
+      persistToken(COOKIE_SESSION_TOKEN);
     } catch {
       persistToken(null);
       setUser(null);
     } finally {
       setIsLoading(false);
     }
-  }, [persistToken, token]);
+  }, [persistToken]);
 
   useEffect(() => {
     void refreshMe();
@@ -63,18 +48,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = useCallback(
     async (input: authApi.LoginInput) => {
       const res = await authApi.login(input);
-      persistToken(res.accessToken);
+      persistToken(COOKIE_SESSION_TOKEN);
       setUser(res.user);
+      setIsLoading(false);
     },
     [persistToken],
   );
 
   const signup = useCallback(async (input: authApi.SignupInput) => {
     const res = await authApi.signup(input);
+    persistToken(null);
+    setUser(null);
+    setIsLoading(false);
+    return res.challenge;
+  }, [persistToken]);
+
+  const verifySignupOtp = useCallback(async (input: authApi.VerifySignupOtpInput) => {
+    const res = await authApi.verifySignupOtp(input);
+    persistToken(COOKIE_SESSION_TOKEN);
     setUser(res.user);
+    setIsLoading(false);
+  }, [persistToken]);
+
+  const resendSignupOtp = useCallback(async (challengeId: string) => {
+    const res = await authApi.resendSignupOtp(challengeId);
+    return res.challenge;
   }, []);
 
   const logout = useCallback(() => {
+    void authApi.logout().catch(() => undefined);
     persistToken(null);
     setUser(null);
     setIsLoading(false);
@@ -85,13 +87,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       token,
       user,
       isLoading,
-      isAuthenticated: !!token,
+      isAuthenticated: !!user && !!token,
       login,
       signup,
+      verifySignupOtp,
+      resendSignupOtp,
       logout,
       refreshMe,
     }),
-    [token, user, isLoading, login, signup, logout, refreshMe],
+    [token, user, isLoading, login, signup, verifySignupOtp, resendSignupOtp, logout, refreshMe],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
