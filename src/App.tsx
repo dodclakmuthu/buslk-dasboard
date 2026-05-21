@@ -20,6 +20,7 @@ import TripManagement from "./components/TripManagement";
 import StaffManagement from "./components/StaffManagement";
 import DailySettlement from "./components/DailySettlement";
 import Reports from "./components/Reports";
+import PerformanceAnalytics from "./components/PerformanceAnalytics";
 import RouteMaster from "./components/RouteMaster";
 import NotificationsView from "./components/NotificationsView";
 import Blueprint from "./components/Blueprint";
@@ -54,6 +55,7 @@ const App = () => (
                       <Route path="staff" element={<StaffManagement />} />
                       <Route path="settlement" element={<DailySettlement />} />
                       <Route path="reports" element={<Reports />} />
+                      <Route path="reports/performance" element={<PerformanceAnalytics />} />
                       <Route path="routes" element={<RouteMaster />} />
                       <Route path="notifications" element={<NotificationsView />} />
                       <Route path="blueprint" element={<Blueprint />} />

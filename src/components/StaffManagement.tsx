@@ -8,6 +8,7 @@ import type { ApiAssignment } from '@/lib/assignmentsApi';
 import { createAssignment, listAssignments, updateAssignment } from '@/lib/assignmentsApi';
 import type { ApiStaff, EmploymentType, StaffRoleType } from '@/lib/staffApi';
 import { createStaff, listStaff, updateStaff } from '@/lib/staffApi';
+import { StaffPageSkeleton } from '@/components/PageSkeletons';
 
 function toIsoDateLocal(d: Date): string {
   const yyyy = d.getFullYear();
@@ -210,6 +211,8 @@ const StaffManagement: React.FC = () => {
     setAssignmentModal({ open: true, bus, date: selectedDate, existing });
   };
 
+  const isInitialLoading = loadingBuses || loadingAssignments || loadingStaff;
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -270,9 +273,9 @@ const StaffManagement: React.FC = () => {
         </div>
 
         {/* Loading/errors */}
-        {(loadingBuses || loadingAssignments || loadingStaff) && (
-          <div className="flex items-center justify-center py-10 text-slate-400">
-            <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading…
+        {isInitialLoading && (
+          <div className="p-4">
+            <StaffPageSkeleton showHeader={false} />
           </div>
         )}
 

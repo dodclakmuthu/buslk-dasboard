@@ -6,6 +6,7 @@ import BusForm from '@/components/BusForm';
 import { useToast } from '@/hooks/use-toast';
 import BusPinModal from '@/components/BusPinModal';
 import BusStatusModal from '@/components/BusStatusModal';
+import { ListPageSkeleton } from '@/components/PageSkeletons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,7 +38,7 @@ const BusManagement: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
-  const [pinModal, setPinModal] = useState<{ bus: ApiBus; mode: 'set' | 'reset' } | null>(null);
+  const [pinModal, setPinModal] = useState<{ bus: ApiBus; mode: 'set' | 'reset'; required?: boolean } | null>(null);
   const [pinSaving, setPinSaving] = useState(false);
   const [pinError, setPinError] = useState<string | null>(null);
   const [pendingEdit, setPendingEdit] = useState<{
@@ -88,14 +89,18 @@ const BusManagement: React.FC = () => {
     setSaving(true);
     setFormError(null);
     try {
-      {
-        const { defaultDriverStaffId: _dd, defaultConductorStaffId: _dc, ...createInput } = input;
-        const { bus } = await createBus(token, createInput);
-        setBuses(prev => [...prev, bus]);
-        toast({ title: 'Bus registered', description: `${bus.registrationNumber} added to fleet.` });
-      }
+      const { defaultDriverStaffId: _dd, defaultConductorStaffId: _dc, ...createInput } = input;
+      const { bus } = await createBus(token, createInput);
+      const createdBus: ApiBus = { ...bus, hasActivePin: Boolean(bus.hasActivePin) };
+
+      setBuses(prev => [createdBus, ...prev]);
       setShowForm(false);
       setEditingBus(null);
+      setPinModal({ bus: createdBus, mode: 'set', required: true });
+      toast({
+        title: 'Bus registered',
+        description: `${createdBus.registrationNumber} added to fleet. Set the bus PIN to finish setup.`,
+      });
     } catch (err: any) {
       setFormError(err.message ?? 'Something went wrong');
     } finally {
@@ -139,9 +144,9 @@ const BusManagement: React.FC = () => {
     }
   };
 
-  const openPinModal = (bus: ApiBus, mode: 'set' | 'reset') => {
+  const openPinModal = (bus: ApiBus, mode: 'set' | 'reset', required = false) => {
     setPinError(null);
-    setPinModal({ bus, mode });
+    setPinModal({ bus, mode, required });
   };
 
   const submitPin = async (pin: string) => {
@@ -152,6 +157,9 @@ const BusManagement: React.FC = () => {
       if (pinModal.mode === 'set') await setBusPin(token, pinModal.bus.id, pin);
       else await resetBusPin(token, pinModal.bus.id, pin);
 
+      setBuses(prev => prev.map(b => (
+        b.id === pinModal.bus.id ? { ...b, hasActivePin: true } : b
+      )));
       toast({
         title: pinModal.mode === 'set' ? 'PIN set' : 'PIN reset',
         description: `${pinModal.bus.registrationNumber} updated successfully.`,
@@ -249,11 +257,7 @@ const BusManagement: React.FC = () => {
       </div>
 
       {/* Loading */}
-      {loading && (
-        <div className="flex items-center justify-center py-20 text-slate-400">
-          <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading fleet…
-        </div>
-      )}
+      {loading && <ListPageSkeleton cards={6} showHeader={false} showFilters={false} />}
 
       {/* Fetch error */}
       {!loading && fetchError && (
@@ -282,6 +286,7 @@ const BusManagement: React.FC = () => {
             const st = STATUS_STYLES[bus.status];
             const routeLabel = bus.route?.routeName ?? 'No route assigned';
             const isSold = bus.status === 'SOLD';
+            const needsPinSetup = !bus.hasActivePin && !isSold;
 
             return (
               <div
@@ -320,31 +325,34 @@ const BusManagement: React.FC = () => {
                           </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuItem
-                            onSelect={(e) => { e.preventDefault(); openPinModal(bus, 'set'); }}
-                            disabled={isSold}
-                            className="gap-2"
-                          >
-                            <KeyRound className="w-4 h-4" /> Set PIN
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={(e) => { e.preventDefault(); openPinModal(bus, 'reset'); }}
-                            disabled={isSold}
-                            className="gap-2"
-                          >
-                            <RefreshCw className="w-4 h-4" /> Reset PIN
-                          </DropdownMenuItem>
+                          {needsPinSetup ? (
+                            <DropdownMenuItem
+                              onSelect={() => { openPinModal(bus, 'set'); }}
+                              disabled={isSold}
+                              className="gap-2"
+                            >
+                              <KeyRound className="w-4 h-4" /> Set PIN
+                            </DropdownMenuItem>
+                          ) : (
+                            <DropdownMenuItem
+                              onSelect={() => { openPinModal(bus, 'reset'); }}
+                              disabled={isSold}
+                              className="gap-2"
+                            >
+                              <RefreshCw className="w-4 h-4" /> Reset PIN
+                            </DropdownMenuItem>
+                          )}
 
                           <DropdownMenuSeparator />
 
                           <DropdownMenuItem
-                            onSelect={(e) => { e.preventDefault(); setStatusError(null); setStatusModalBus(bus); }}
+                            onSelect={() => { setStatusError(null); setStatusModalBus(bus); }}
                             className="gap-2"
                           >
                             <Settings className="w-4 h-4" /> Change Status
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={(e) => { e.preventDefault(); setSoldError(null); setConfirmSoldBus(bus); }}
+                            onSelect={() => { setSoldError(null); setConfirmSoldBus(bus); }}
                             disabled={isSold}
                             className="gap-2 text-red-600 focus:text-red-600"
                           >
@@ -369,6 +377,13 @@ const BusManagement: React.FC = () => {
                       <span>{bus.seatCount != null ? `${bus.seatCount} seats` : 'Seats not set'}</span>
                     </div>
                   </div>
+
+                  {needsPinSetup && (
+                    <div className="mt-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                      <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                      <span>PIN setup is pending for this bus. Set a 4-digit PIN before crew login.</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-slate-50 px-5 py-3 flex gap-2">
@@ -410,6 +425,7 @@ const BusManagement: React.FC = () => {
           mode={pinModal.mode}
           saving={pinSaving}
           error={pinError}
+          required={Boolean(pinModal.required)}
           onClose={() => { if (!pinSaving) setPinModal(null); }}
           onSubmit={submitPin}
         />

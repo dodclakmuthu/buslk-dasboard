@@ -6,10 +6,11 @@ import { useCompany } from '@/contexts/CompanyContext';
 import { updateMyCompany } from '@/lib/companyApi';
 import { getWageDefaults, updateWageDefaults } from '@/lib/settingsApi';
 import { ApiError } from '@/lib/api';
+import { FormFieldsSkeleton, SettingsPageSkeleton } from './PageSkeletons';
 
 const SettingsView: React.FC = () => {
   const { user, token } = useAuth();
-  const { company, setCompany } = useCompany();
+  const { company, setCompany, isLoadingCompany } = useCompany();
   const [activeTab, setActiveTab] = useState('company');
   const [saved, setSaved] = useState(false);
   const [isSavingCompany, setIsSavingCompany] = useState(false);
@@ -125,6 +126,10 @@ const SettingsView: React.FC = () => {
     { id: 'language', label: 'Language', icon: Globe },
   ];
 
+  if (isLoadingCompany) {
+    return <SettingsPageSkeleton showHeader={true} />;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -193,9 +198,7 @@ const SettingsView: React.FC = () => {
               <h2 className="text-lg font-semibold text-slate-900">Default Wage Settings</h2>
               <p className="text-sm text-slate-500">These defaults apply when creating new buses. Individual bus settings can override these.</p>
               {wageLoading ? (
-                <div className="flex items-center justify-center py-10">
-                  <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-                </div>
+                <FormFieldsSkeleton rows={5} />
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
