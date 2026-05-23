@@ -18,6 +18,8 @@ import {
   type SalariesReportResponse,
   type RouteReportResponse,
 } from '@/lib/reportsApi';
+import ReportsSectionNav from './ReportsSectionNav';
+import { ReportsPageSkeleton } from './PageSkeletons';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -98,12 +100,7 @@ function exportRoutes(data: RouteReportResponse): void {
 // ── Sub-components ────────────────────────────────────────────────────────────
 
 function LoadingState() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 gap-3">
-      <Loader2 className="w-8 h-8 text-amber-500 animate-spin" />
-      <p className="text-sm text-slate-500">Loading report…</p>
-    </div>
-  );
+  return <ReportsPageSkeleton showHeader={false} />;
 }
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
@@ -256,6 +253,8 @@ const Reports: React.FC = () => {
           </button>
         </div>
       </div>
+
+      <ReportsSectionNav />
 
       {/* Report Tabs */}
       <div className="flex gap-2 overflow-x-auto pb-2">

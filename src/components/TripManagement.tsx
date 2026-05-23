@@ -18,6 +18,7 @@ import {
   TripManagementUiData,
 } from '@/lib/tripsApi';
 import { EXPENSE_CATEGORIES, ExpenseCategory, ExtraIncomeCategory, Trip, Expense, ExtraIncome } from '@/data/types';
+import { TripsPageSkeleton } from './PageSkeletons';
 
 // ─── Local helpers ────────────────────────────────────────────────────────────
 
@@ -57,6 +58,18 @@ const TripManagement: React.FC = () => {
   }, [token]);
 
   useEffect(() => { void loadBuses(); }, [loadBuses]);
+
+  useEffect(() => {
+    if (busesLoading || buses.length === 0) return;
+
+    setSelectedBusId((current) => {
+      if (current && buses.some((bus) => bus.id === current)) {
+        return current;
+      }
+
+      return buses[0]?.id ?? '';
+    });
+  }, [buses, busesLoading]);
 
   // ── Staff ──────────────────────────────────────────────────────────────────
   const [staffList, setStaffList] = useState<ApiStaff[]>([]);
@@ -248,6 +261,8 @@ const TripManagement: React.FC = () => {
     return s ? s.fullName.split(' ')[0] : '—';
   };
 
+  const isTripsInitialLoading = busesLoading && buses.length === 0 && !busesError;
+
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
@@ -269,62 +284,68 @@ const TripManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Bus Selector */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-        <label className="block text-sm font-semibold text-slate-700 mb-2">Select Bus</label>
-
-        {busesLoading ? (
-          <div className="flex items-center gap-2 text-slate-400 py-4">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            <span className="text-sm">Loading buses…</span>
-          </div>
-        ) : busesError ? (
-          <div className="flex items-center gap-2 text-red-500 py-2">
-            <AlertCircle className="w-4 h-4" />
-            <span className="text-sm">{busesError}</span>
-            <button onClick={loadBuses} className="ml-2 text-xs underline">Retry</button>
-          </div>
-        ) : buses.length === 0 ? (
-          <p className="text-sm text-slate-400 py-2">No active buses found.</p>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-            {buses.map(bus => (
-              <button
-                key={bus.id}
-                onClick={() => setSelectedBusId(bus.id)}
-                className={`p-3 rounded-xl border-2 text-center transition-all ${
-                  selectedBusId === bus.id
-                    ? 'border-amber-500 bg-amber-50'
-                    : 'border-slate-100 hover:border-slate-200 bg-white'
-                }`}
-              >
-                <Bus className={`w-6 h-6 mx-auto mb-1 ${selectedBusId === bus.id ? 'text-amber-600' : 'text-slate-400'}`} />
-                <p className={`text-sm font-bold ${selectedBusId === bus.id ? 'text-amber-700' : 'text-slate-700'}`}>
-                  {bus.registrationNumber}
-                </p>
-                <p className="text-[10px] text-slate-400">{bus.route?.routeCode ?? bus.busName ?? '—'}</p>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {selectedBusId && (
+      {isTripsInitialLoading ? (
+        <TripsPageSkeleton showHeader={false} />
+      ) : (
         <>
-          {summaryLoading && !summary && (
-            <div className="flex items-center justify-center gap-2 text-slate-400 py-6">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="text-sm">Loading trip data…</span>
-            </div>
-          )}
+          {/* Bus Selector */}
+          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Select Bus</label>
 
-          {summaryError && (
-            <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 flex items-center gap-2 text-red-600 text-sm">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              {summaryError}
-              <button onClick={() => loadSummary()} className="ml-auto underline text-xs">Retry</button>
-            </div>
-          )}
+            {busesLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <div key={index} className="p-3 rounded-xl border-2 border-slate-100 bg-white text-center space-y-2">
+                    <div className="w-6 h-6 rounded mx-auto bg-slate-100/80 animate-pulse" />
+                    <div className="h-4 w-16 mx-auto rounded bg-slate-100/80 animate-pulse" />
+                    <div className="h-3 w-10 mx-auto rounded bg-slate-100/80 animate-pulse" />
+                  </div>
+                ))}
+              </div>
+            ) : busesError ? (
+              <div className="flex items-center gap-2 text-red-500 py-2">
+                <AlertCircle className="w-4 h-4" />
+                <span className="text-sm">{busesError}</span>
+                <button onClick={loadBuses} className="ml-2 text-xs underline">Retry</button>
+              </div>
+            ) : buses.length === 0 ? (
+              <p className="text-sm text-slate-400 py-2">No active buses found.</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                {buses.map(bus => (
+                  <button
+                    key={bus.id}
+                    onClick={() => setSelectedBusId(bus.id)}
+                    className={`p-3 rounded-xl border-2 text-center transition-all ${
+                      selectedBusId === bus.id
+                        ? 'border-amber-500 bg-amber-50'
+                        : 'border-slate-100 hover:border-slate-200 bg-white'
+                    }`}
+                  >
+                    <Bus className={`w-6 h-6 mx-auto mb-1 ${selectedBusId === bus.id ? 'text-amber-600' : 'text-slate-400'}`} />
+                    <p className={`text-sm font-bold ${selectedBusId === bus.id ? 'text-amber-700' : 'text-slate-700'}`}>
+                      {bus.registrationNumber}
+                    </p>
+                    <p className="text-[10px] text-slate-400">{bus.route?.routeCode ?? bus.busName ?? '—'}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {selectedBusId && (
+            <>
+              {summaryLoading && !summary ? (
+                <TripsPageSkeleton showHeader={false} showBusSelector={false} />
+              ) : (
+                <>
+                  {summaryError && (
+                    <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 flex items-center gap-2 text-red-600 text-sm">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      {summaryError}
+                      <button onClick={() => loadSummary()} className="ml-auto underline text-xs">Retry</button>
+                    </div>
+                  )}
 
           {/* Summary Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -484,29 +505,33 @@ const TripManagement: React.FC = () => {
             )}
           </div>
 
-          {/* Extra Incomes List */}
-          {allExtraIncomes.length > 0 && (
-            <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
-              <div className="p-5 border-b border-slate-100">
-                <h2 className="text-lg font-semibold text-slate-900">Today's Extra Income</h2>
-              </div>
-              <div className="divide-y divide-slate-50">
-                {allExtraIncomes.map(inc => (
-                  <div key={inc.id} className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <PlusCircle className="w-4 h-4 text-blue-600" />
+                  {/* Extra Incomes List */}
+                  {allExtraIncomes.length > 0 && (
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+                      <div className="p-5 border-b border-slate-100">
+                        <h2 className="text-lg font-semibold text-slate-900">Today's Extra Income</h2>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-slate-900 capitalize">{inc.category.replace(/_/g, ' ')}</p>
-                        <p className="text-xs text-slate-400">{inc.note || (inc.tripId ? 'Trip extra income' : 'Operational income')}</p>
+                      <div className="divide-y divide-slate-50">
+                        {allExtraIncomes.map(inc => (
+                          <div key={inc.id} className="p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <PlusCircle className="w-4 h-4 text-blue-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-slate-900 capitalize">{inc.category.replace(/_/g, ' ')}</p>
+                                <p className="text-xs text-slate-400">{inc.note || (inc.tripId ? 'Trip extra income' : 'Operational income')}</p>
+                              </div>
+                            </div>
+                            <span className="font-semibold text-blue-600">{formatCurrency(inc.amount)}</span>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                    <span className="font-semibold text-blue-600">{formatCurrency(inc.amount)}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+                  )}
+                </>
+              )}
+            </>
           )}
         </>
       )}

@@ -6,6 +6,7 @@ import type { ApiStaff } from '@/lib/staffApi';
 import { listStaff } from '@/lib/staffApi';
 import type { ApiCompanyRoute, ApiGlobalRoute } from '@/lib/routeApi';
 import { listCompanyRoutes, listGlobalRoutes } from '@/lib/routeApi';
+import { FormFieldsSkeleton } from '@/components/PageSkeletons';
 
 type RouteScope = 'public' | 'private';
 
@@ -351,8 +352,11 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
                     </option>
                   ))}
                 </select>
-                {routesLoading && <p className="text-xs text-slate-500 mt-2">Loading routes...</p>}
-                {!routesLoading && (
+                {routesLoading ? (
+                  <div className="mt-3">
+                    <FormFieldsSkeleton rows={1} />
+                  </div>
+                ) : (
                   <p className="text-xs text-slate-500 mt-2">
                     {routeScope === 'public'
                       ? 'Public routes come from the national NTC-approved route catalog.'
@@ -437,40 +441,44 @@ const BusForm: React.FC<Props> = ({ editing, saving, error, onClose, onSubmit })
                   </p>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className={labelCls}>Default Driver</label>
-                    <select
-                      value={form.defaultDriverStaffId}
-                      onChange={set('defaultDriverStaffId')}
-                      className={inputCls}
-                      disabled={staffLoading}
-                    >
-                      <option value="">None</option>
-                      {driverOptions.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.fullName}
-                        </option>
-                      ))}
-                    </select>
+                {staffLoading ? (
+                  <FormFieldsSkeleton rows={2} />
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className={labelCls}>Default Driver</label>
+                      <select
+                        value={form.defaultDriverStaffId}
+                        onChange={set('defaultDriverStaffId')}
+                        className={inputCls}
+                        disabled={staffLoading}
+                      >
+                        <option value="">None</option>
+                        {driverOptions.map(s => (
+                          <option key={s.id} value={s.id}>
+                            {s.fullName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={labelCls}>Default Conductor</label>
+                      <select
+                        value={form.defaultConductorStaffId}
+                        onChange={set('defaultConductorStaffId')}
+                        className={inputCls}
+                        disabled={staffLoading}
+                      >
+                        <option value="">None</option>
+                        {conductorOptions.map(s => (
+                          <option key={s.id} value={s.id}>
+                            {s.fullName}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className={labelCls}>Default Conductor</label>
-                    <select
-                      value={form.defaultConductorStaffId}
-                      onChange={set('defaultConductorStaffId')}
-                      className={inputCls}
-                      disabled={staffLoading}
-                    >
-                      <option value="">None</option>
-                      {conductorOptions.map(s => (
-                        <option key={s.id} value={s.id}>
-                          {s.fullName}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                )}
               </div>
             )}
           </div>
