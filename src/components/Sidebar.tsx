@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard, Bus, MapPin, Users, Route, Receipt,
   Calculator, BarChart3, Bell, Settings, FileText, X, ChevronRight
@@ -35,8 +36,17 @@ const navItems = [
 
 const Sidebar: React.FC = () => {
   const { sidebarOpen, toggleSidebar, unreadNotificationCount } = useAppContext();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const displayName = user?.fullName?.trim() || 'Owner';
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'O';
 
   return (
     <>
@@ -122,10 +132,10 @@ const Sidebar: React.FC = () => {
         <div className={`p-4 border-t border-slate-700/50 ${!sidebarOpen ? 'lg:px-2' : ''}`}>
           <div className={`flex items-center gap-3 ${!sidebarOpen ? 'lg:justify-center' : ''}`}>
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center flex-shrink-0 text-sm font-bold">
-              KP
+              {initials}
             </div>
             <div className={`${!sidebarOpen ? 'lg:hidden' : ''}`}>
-              <p className="text-sm font-medium">Kamal Perera</p>
+              <p className="text-sm font-medium truncate">{displayName}</p>
               <p className="text-[11px] text-slate-400">Owner</p>
             </div>
           </div>

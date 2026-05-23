@@ -21,11 +21,19 @@ const PATH_LABEL: Record<string, string> = {
 
 const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { sidebarOpen, toggleSidebar, unreadNotificationCount } = useAppContext();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
   const pageLabel = PATH_LABEL[location.pathname] ?? 'Dashboard';
+  const displayName = user?.fullName?.trim() || 'Owner';
+  const initials = displayName
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'O';
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -70,7 +78,7 @@ const AppLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <LogOut className="w-5 h-5 text-slate-600" />
               </button>
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white text-xs font-bold">
-                KP
+                {initials}
               </div>
             </div>
           </div>
